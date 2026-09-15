@@ -1,34 +1,71 @@
 <!doctype html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>TikTok Location</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>TikTok User Lookup</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="wrap">
-    <h1>TikTok Location</h1>
-    <p class="intro">Syötä TikTok-käyttäjänimi.</p>
+    <h1>TikTok User</h1>
+    <p class="sub">Hae julkiset profiilitiedot käyttäjänimellä.</p>
 
-    <div class="search">
+    <form id="form" class="search">
       <span>@</span>
-      <input id="username" type="text" placeholder="käyttäjänimi" autocomplete="off" />
-      <button id="analyzeBtn">Hae</button>
-    </div>
+      <input id="username" placeholder="käyttäjänimi" autocomplete="off" spellcheck="false">
+      <button type="submit" id="searchBtn">Hae</button>
+    </form>
 
-    <section id="result" class="result hidden" aria-live="polite">
-      <div class="label">Arvioitu sijainti</div>
-      <div id="location" class="location">Ei tietoa</div>
-      <div id="confidence" class="confidence"></div>
-      <div id="reason" class="reason"></div>
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <section id="result" class="card hidden">
+      <div class="profile">
+        <img id="avatar" class="avatar" alt="">
+        <div class="profileText">
+          <div id="nickname" class="nickname"></div>
+          <div id="handle" class="handle"></div>
+        </div>
+      </div>
+
+      <div class="locationRow">
+        <div>
+          <div class="label">Maa</div>
+          <div id="country" class="location"></div>
+        </div>
+        <div>
+          <div class="label">Kieli</div>
+          <div id="language" class="language"></div>
+        </div>
+      </div>
+
+      <div id="aboutWrap" class="aboutWrap hidden">
+        <div class="label">Bio</div>
+        <div id="about" class="about"></div>
+      </div>
+
+      <div class="stats">
+        <div><strong id="followers">–</strong><span>Seuraajat</span></div>
+        <div><strong id="following">–</strong><span>Seuratut</span></div>
+        <div><strong id="hearts">–</strong><span>Tykkäykset</span></div>
+        <div><strong id="videos">–</strong><span>Videot</span></div>
+      </div>
+
+      <details>
+        <summary>Lisätiedot</summary>
+        <div class="detailsGrid">
+          <div><span>User ID</span><code id="userId">–</code></div>
+          <div><span>SecUID</span><code id="secUid">–</code></div>
+          <div><span>Tili luotu</span><b id="created">–</b></div>
+          <div><span>Ystävät</span><b id="friends">–</b></div>
+        </div>
+      </details>
+
+      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
     </section>
 
-    <details>
-      <summary>Lisää julkisia vihjeitä käsin</summary>
-      <textarea id="bio" rows="4" placeholder="Bio, hashtagit tai muu julkinen teksti"></textarea>
-    </details>
+    <p class="note">Maa on julkisista signaaleista johdettu arvio, ei tarkka tai reaaliaikainen sijainti.</p>
   </main>
 
   <script src="app.js"></script>

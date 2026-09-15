@@ -1,79 +1,44 @@
-# TikTok Location — valmis minimalistinen versio
+# TikTok User Lookup — GitHub Pages
 
-Tämä projekti on tarkoitettu julkaistavaksi **Vercelissä GitHub-repositorystä**.
-Frontend ja backend ovat samassa repossa.
+Valmis minimalistinen käyttöliittymä, joka hakee julkiset TikTok-käyttäjätiedot
+TikMatrixin avoimesta API:sta.
 
-## Mitä ohjelma tekee
+## Asennus GitHubiin
 
-- käyttäjä syöttää TikTok-käyttäjänimen
-- backend tarkistaa julkisen profiilin TikTokin oEmbed-palvelusta
-- jos TikTok Research API -avain on määritetty, backend hakee myös julkisen bio-kuvauksen
-- ohjelma muodostaa bio-/nimivihjeistä karkean maa-arvion
-- jos tietoa ei ole, ohjelma näyttää rehellisesti “Ei riittävästi tietoa”
+Korvaa repositorion juuresta nämä tiedostot:
 
-Ohjelma ei selvitä IP-osoitetta, GPS-sijaintia, kotiosoitetta tai reaaliaikaista sijaintia.
+- `index.html`
+- `styles.css`
+- `app.js`
 
-## Miksi Vercel eikä GitHub Pages?
+GitHub Pages päivittyy automaattisesti.
 
-GitHub Pages voi julkaista vain staattisen käyttöliittymän. Tämä ohjelma tarvitsee
-`/api/analyze`-backendin, joten koko GitHub-repo julkaistaan Verceliin.
+## Haku
 
-## Käyttöönotto
+Sovellus kutsuu:
 
-### 1. GitHub
+`https://user.tikmatrix.com/api/user?username=KAYTTAJANIMI`
 
-Lataa tämän ZIP-paketin sisältö GitHub-repositoryn juureen.
+API ei vaadi avainta.
 
-Repossa pitää näkyä ainakin:
+## Näytettävät tiedot
 
-- `api/analyze.js`
-- `public/index.html`
-- `public/styles.css`
-- `public/app.js`
-- `package.json`
-- `vercel.json`
+- profiilikuva
+- nickname / käyttäjänimi
+- maa
+- kieli
+- bio
+- seuraajat
+- seuratut
+- tykkäykset
+- videoiden määrä
+- ystävät
+- User ID
+- SecUID
+- tilin luontiaika
 
-### 2. Vercel
+Maa on lähdepalvelun julkisista signaaleista tekemä arvio, ei tarkka sijainti.
 
-1. Mene osoitteeseen https://vercel.com/
-2. Kirjaudu GitHub-tunnuksella.
-3. Valitse **Add New → Project**.
-4. Valitse tämä GitHub-repository.
-5. Framework Preset: **Other**
-6. Paina **Deploy**.
+## Rate limit
 
-Perusversio toimii tämän jälkeen ilman API-avainta julkisen TikTok-profiilin
-olemassaolon tarkistamiseen.
-
-### 3. TikTok Research API (valinnainen, mutta tarvitaan bioon perustuvaan automaattiseen maa-arvioon)
-
-Jos sinulla on TikTok Research API -käyttöoikeus:
-
-Vercel → Project → Settings → Environment Variables
-
-Lisää:
-
-`TIKTOK_RESEARCH_ACCESS_TOKEN`
-
-ja arvoksi TikTok Research API -access token.
-
-Tee sen jälkeen Redeploy.
-
-## Tärkeä tekninen rajoitus
-
-TikTokin normaali User Info / Display API vaatii käyttäjän oman valtuutuksen.
-Research API pystyy hakemaan julkisen tilin tietoja käyttäjänimellä, mutta sen
-käyttö on erikseen rajattua. Siksi mikään tavallinen GitHub Pages -sivu ei voi
-luotettavasti palauttaa minkä tahansa TikTok-käyttäjän maata pelkän käyttäjänimen
-perusteella.
-
-## Paikallinen testaus
-
-Jos Vercel CLI on asennettu:
-
-```bash
-npm install -g vercel
-vercel dev
-```
-
-Avaa selaimessa Vercelin näyttämä paikallinen osoite.
+TikMatrix rajoittaa username-hakuja. Jos saat 503-virheen, odota hetki ja yritä uudelleen.

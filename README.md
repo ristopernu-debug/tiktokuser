@@ -1,17 +1,23 @@
-# TikTok Checker 2.2
+# TikTok Checker – region-debug
 
-Tämä versio ei yritä generoida TikTokin allekirjoituksia tai kiertää bot-suojausta.
+Tämä testiversio tekee tarkoituksella vain yhden region-haun:
 
-Region-logiikka:
-1. TikTokin profiilin julkinen `region`
-2. jos puuttuu, selain kerää profiilissa näkyvät julkiset `/video/...`-linkit
-3. avataan enintään 3 julkista videosivua normaalisti
-4. luetaan videosivun julkisesta hydration-datasta `locationCreated`
-5. jos arvoa ei löydy, näytetään N/A
+`__UNIVERSAL_DATA_FOR_REHYDRATION__`
+→ `__DEFAULT_SCOPE__`
+→ `webapp.user-detail`
+→ `userInfo`
+→ `user`
+→ `region`
+
+Se ei päättele maata kielestä, biosta tai käyttäjänimestä, eikä tässä versiossa
+käytetä videoiden `locationCreated`-kenttää tai erillistä `/api/user/detail/`-kutsua.
 
 Lisätiedoissa näkyy:
-- Videolinkkejä löytyi
-- Videoita tarkistettu
-- Region-lähde
+- TikTok-sivun HTTP-vastaus
+- löytyikö `region`-avain käyttäjäobjektista
+- `region`-kentän raaka-arvo
 
-Ei TikMatrixia. Ei Omar-Thing API:a. Ei API-avainta.
+Näin voidaan testata yksiselitteisesti, antaako TikTok kyseiselle julkiselle
+tilille regionin juuri profiilisivun mukana toimitetussa datassa.
+
+Tietoja ei tallenneta sovelluksen omaan tietokantaan.

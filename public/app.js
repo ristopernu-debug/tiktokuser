@@ -1,42 +1,55 @@
-const $ = id => document.getElementById(id);
-const regionNames = new Intl.DisplayNames(["fi"], {type:"region"});
-const languageNames = new Intl.DisplayNames(["fi"], {type:"language"});
+const $ = (id) => document.getElementById(id);
+const regionNames = new Intl.DisplayNames(["fi"], { type: "region" });
+const languageNames = new Intl.DisplayNames(["fi"], { type: "language" });
 
-function cleanUsername(value="") {
-  return value.trim()
+function cleanUsername(value = "") {
+  return value
+    .trim()
     .replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i, "")
     .replace(/^@/, "")
     .split(/[/?#]/)[0];
 }
+
 function compact(value) {
   const n = Number(value);
   return Number.isFinite(n)
-    ? new Intl.NumberFormat("fi-FI",{notation:"compact",maximumFractionDigits:1}).format(n)
+    ? new Intl.NumberFormat("fi-FI", { notation: "compact", maximumFractionDigits: 1 }).format(n)
     : "–";
 }
+
 function yesNo(v) {
   if (v === true) return "Kyllä";
   if (v === false) return "Ei";
   return "–";
 }
+
 function prettyRegion(code) {
   if (!code) return "N/A";
   const c = String(code).toUpperCase();
   try {
     const n = regionNames.of(c);
     return n && n !== c ? `${c} · ${n}` : c;
-  } catch { return c; }
+  } catch {
+    return c;
+  }
 }
+
 function prettyLanguage(code) {
   if (!code) return "N/A";
-  const c = String(code).toLowerCase().replace("_","-");
+  const c = String(code).toLowerCase().replace("_", "-");
   try {
     const n = languageNames.of(c.split("-")[0]);
     return n ? `${c} · ${n}` : c;
-  } catch { return c; }
+  } catch {
+    return c;
+  }
 }
 
-$("form").addEventListener("submit", async e => {
+function yesNoDiagnostic(v) {
+  return v ? "Kyllä" : "Ei";
+}
+
+$("form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const username = cleanUsername($("username").value);
   if (!username) return;
@@ -44,7 +57,7 @@ $("form").addEventListener("submit", async e => {
   $("username").value = username;
   $("result").classList.add("hidden");
   $("status").className = "status";
-  $("status").textContent = "Haetaan profiilia ja julkisten videoiden metadataa…";
+  $("status").textContent = "Haetaan TikTokin julkisia profiilitietoja…";
   $("searchBtn").disabled = true;
 
   try {
@@ -54,17 +67,16 @@ $("form").addEventListener("submit", async e => {
 
     const u = data.user || {};
     const s = data.stats || {};
+    const d = data.diagnostics || {};
 
     $("nickname").textContent = u.nickname || username;
     $("handle").textContent = `@${u.uniqueId || username}`;
     $("region").textContent = prettyRegion(u.region);
     $("language").textContent = prettyLanguage(u.language);
-    $("regionSource").textContent =
-      data.regionSource === "profile" ? "TikTok-profiilidata" :
-      data.regionSource === "video_page" ? "TikTok-videosivu" :
-      "Ei saatavilla";
-    $("videoLinks").textContent = String(data.videoLinksFound ?? 0);
-    $("checkedVideos").textContent = String(data.checkedVideos ?? 0);
+    $("regionSource").textContent = data.regionSource || "Ei saatavilla";
+    $("detailStatus").textContent = `HTTP ${d.httpStatus ?? "–"}`;
+    $("videoLinks").textContent = yesNoDiagnostic(d.regionKeyPresent);
+    $("checkedVideos").textContent = d.rawRegion == null || d.rawRegion === "" ? "–" : String(d.rawRegion);
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");
@@ -93,7 +105,7 @@ $("form").addEventListener("submit", async e => {
     $("userId").textContent = u.id || "–";
     $("secUid").textContent = u.secUid || "–";
     $("created").textContent = u.createTime
-      ? new Date(Number(u.createTime)*1000).toLocaleString("fi-FI")
+      ? new Date(Number(u.createTime) * 1000).toLocaleString("fi-FI")
       : "–";
     $("privateAccount").textContent = yesNo(u.privateAccount);
     $("verified").textContent = yesNo(u.verified);

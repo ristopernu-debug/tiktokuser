@@ -1,0 +1,10 @@
+{
+  "name": "TikTok Public Location Analyzer",
+  "short_name": "Location Analyzer",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#0f172a",
+  "description": "Julkisiin TikTok-vihjeisiin perustuva karkea sijaintianalyysi.",
+  "icons": []
+}

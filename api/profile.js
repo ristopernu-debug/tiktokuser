@@ -10,29 +10,17 @@ function cleanUsername(value="") {
 }
 
 function pickRegion(items=[]) {
-  const rows = items
-    .map((item, index) => ({
-      index,
-      code: String(item?.locationCreated || item?.location_created || "").toUpperCase()
-    }))
-    .filter(x => /^[A-Z]{2}$/.test(x.code));
+  const codes = items
+    .map(item => String(item?.locationCreated || item?.location_created || "").toUpperCase())
+    .filter(code => /^[A-Z]{2}$/.test(code));
 
-  if (!rows.length) return null;
+  if (!codes.length) return null;
 
   const counts = new Map();
-  for (const row of rows) counts.set(row.code, (counts.get(row.code) || 0) + 1);
+  for (const c of codes) counts.set(c, (counts.get(c) || 0) + 1);
 
-  let winner = rows[0].code;
-  let best = counts.get(winner);
-
-  for (const [code, count] of counts.entries()) {
-    if (count > best) {
-      winner = code;
-      best = count;
-    }
-  }
-
-  return winner;
+  return [...counts.entries()]
+    .sort((a,b) => b[1] - a[1])[0][0];
 }
 
 export default async function handler(req, res) {
@@ -59,82 +47,99 @@ export default async function handler(req, res) {
     });
 
     const page = await browser.newPage();
-
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     );
+    await page.setExtraHTTPHeaders({"Accept-Language":"en-US,en;q=0.9"});
 
-    await page.setExtraHTTPHeaders({
-      "Accept-Language":"en-US,en;q=0.9"
-    });
-
-    await page.setRequestInterception(true);
-    page.on("request", req => {
-      const type = req.resourceType();
-      if (["image","media","font","stylesheet"].includes(type)) req.abort();
-      else req.continue();
-    });
-
-    let postList = null;
-
-    page.on("response", async response => {
-      const url = response.url();
-      if (!url.startsWith("https://www.tiktok.com/api/post/item_list/")) return;
-      if (postList) return;
-
-      try {
-        const json = await response.json();
-        if (Array.isArray(json?.itemList)) postList = json;
-      } catch {}
-    });
-
-    const profileUrl = `https://www.tiktok.com/@${encodeURIComponent(username)}`;
-
-    await page.goto(profileUrl, {
+    await page.goto(`https://www.tiktok.com/@${encodeURIComponent(username)}`, {
       waitUntil:"domcontentloaded",
       timeout:20000
     });
 
-    // Give TikTok's own page scripts time to issue /api/post/item_list/.
-    const started = Date.now();
-    while (!postList && Date.now() - started < 9000) {
-      await new Promise(r => setTimeout(r, 350));
-    }
-
-    const hydration = await page.evaluate(() => {
+    const profile = await page.evaluate(() => {
       const el = document.querySelector("#__UNIVERSAL_DATA_FOR_REHYDRATION__");
       if (!el?.textContent) return null;
-      try { return JSON.parse(el.textContent); } catch { return null; }
+      try {
+        const data = JSON.parse(el.textContent);
+        return data?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo || null;
+      } catch {
+        return null;
+      }
     });
 
-    const detail =
-      hydration?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo || null;
-
-    if (!detail?.user) {
-      return res.status(404).json({
-        error:"TikTok ei palauttanut julkista profiilidataa."
-      });
+    if (!profile?.user) {
+      return res.status(404).json({error:"TikTok ei palauttanut julkista profiilidataa."});
     }
 
-    const u = detail.user;
-    const s = detail.stats || detail.statsV2 || {};
-    const items = postList?.itemList || [];
-
+    const u = profile.user;
+    const s = profile.stats || profile.statsV2 || {};
     let region = u.region || null;
     let regionSource = region ? "profile" : null;
+    let checkedVideos = 0;
+    let videoStatus = "Ei haettu";
 
-    if (!region) {
-      const videoRegion = pickRegion(items);
-      if (videoRegion) {
-        region = videoRegion;
-        regionSource = "video_metadata";
+    if (!region && u.secUid) {
+      const postResult = await page.evaluate(async (secUid) => {
+        const params = new URLSearchParams({
+          secUid,
+          cursor:"0",
+          count:"35"
+        });
+
+        const urls = [
+          `/api/post/item_list/?${params.toString()}`,
+          `/api/post/item_list/?aid=1988&${params.toString()}`
+        ];
+
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, {
+              method:"GET",
+              credentials:"include",
+              headers:{
+                "accept":"application/json, text/plain, */*"
+              }
+            });
+
+            const text = await r.text();
+            let json = null;
+            try { json = JSON.parse(text); } catch {}
+
+            if (r.ok && json && (Array.isArray(json.itemList) || Array.isArray(json.items))) {
+              return {
+                ok:true,
+                status:r.status,
+                url,
+                json
+              };
+            }
+          } catch {}
+        }
+
+        return {ok:false};
+      }, u.secUid);
+
+      if (postResult?.ok) {
+        const items = postResult.json.itemList || postResult.json.items || [];
+        checkedVideos = items.length;
+        videoStatus = `OK (${checkedVideos})`;
+
+        const videoRegion = pickRegion(items);
+        if (videoRegion) {
+          region = videoRegion;
+          regionSource = "video_metadata";
+        }
+      } else {
+        videoStatus = "TikTok ei palauttanut videolistaa";
       }
     }
 
     return res.status(200).json({
       regionSource,
-      checkedVideos: items.length,
+      checkedVideos,
+      videoStatus,
       user:{
         id:u.id ?? null,
         secUid:u.secUid ?? null,

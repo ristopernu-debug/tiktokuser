@@ -1,5 +1,4 @@
 const $ = id => document.getElementById(id);
-
 const regionNames = new Intl.DisplayNames(["fi"], {type:"region"});
 const languageNames = new Intl.DisplayNames(["fi"], {type:"language"});
 
@@ -9,20 +8,17 @@ function cleanUsername(value="") {
     .replace(/^@/, "")
     .split(/[/?#]/)[0];
 }
-
 function compact(value) {
   const n = Number(value);
   return Number.isFinite(n)
     ? new Intl.NumberFormat("fi-FI",{notation:"compact",maximumFractionDigits:1}).format(n)
     : "–";
 }
-
 function yesNo(v) {
   if (v === true) return "Kyllä";
   if (v === false) return "Ei";
   return "–";
 }
-
 function prettyRegion(code) {
   if (!code) return "N/A";
   const c = String(code).toUpperCase();
@@ -31,7 +27,6 @@ function prettyRegion(code) {
     return n && n !== c ? `${c} · ${n}` : c;
   } catch { return c; }
 }
-
 function prettyLanguage(code) {
   if (!code) return "N/A";
   const c = String(code).toLowerCase().replace("_","-");
@@ -43,7 +38,6 @@ function prettyLanguage(code) {
 
 $("form").addEventListener("submit", async e => {
   e.preventDefault();
-
   const username = cleanUsername($("username").value);
   if (!username) return;
 
@@ -70,11 +64,11 @@ $("form").addEventListener("submit", async e => {
       data.regionSource === "video_metadata" ? "TikTok-videometadata" :
       "Ei saatavilla";
     $("checkedVideos").textContent = String(data.checkedVideos ?? 0);
+    $("videoStatus").textContent = data.videoStatus || "–";
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");
     fallback.textContent = (u.nickname || username).charAt(0).toUpperCase();
-
     if (u.avatar) {
       avatar.src = u.avatar;
       avatar.alt = `${u.nickname || username} profiilikuva`;
@@ -96,11 +90,10 @@ $("form").addEventListener("submit", async e => {
     $("following").textContent = compact(s.followingCount);
     $("likes").textContent = compact(s.heartCount);
     $("videos").textContent = compact(s.videoCount);
-
     $("userId").textContent = u.id || "–";
     $("secUid").textContent = u.secUid || "–";
     $("created").textContent = u.createTime
-      ? new Date(Number(u.createTime) * 1000).toLocaleString("fi-FI")
+      ? new Date(Number(u.createTime)*1000).toLocaleString("fi-FI")
       : "–";
     $("privateAccount").textContent = yesNo(u.privateAccount);
     $("verified").textContent = yesNo(u.verified);

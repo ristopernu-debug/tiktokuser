@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/profile.js": {
-      "maxDuration": 30
+      "maxDuration": 45
     }
   },
   "rewrites": [

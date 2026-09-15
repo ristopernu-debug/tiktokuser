@@ -44,7 +44,7 @@ $("form").addEventListener("submit", async e => {
   $("username").value = username;
   $("result").classList.add("hidden");
   $("status").className = "status";
-  $("status").textContent = "Haetaan profiilia ja videometadataa…";
+  $("status").textContent = "Haetaan profiilia ja julkisten videoiden metadataa…";
   $("searchBtn").disabled = true;
 
   try {
@@ -61,10 +61,10 @@ $("form").addEventListener("submit", async e => {
     $("language").textContent = prettyLanguage(u.language);
     $("regionSource").textContent =
       data.regionSource === "profile" ? "TikTok-profiilidata" :
-      data.regionSource === "video_metadata" ? "TikTok-videometadata" :
+      data.regionSource === "video_page" ? "TikTok-videosivu" :
       "Ei saatavilla";
+    $("videoLinks").textContent = String(data.videoLinksFound ?? 0);
     $("checkedVideos").textContent = String(data.checkedVideos ?? 0);
-    $("videoStatus").textContent = data.videoStatus || "–";
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");

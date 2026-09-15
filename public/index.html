@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Open source TikTok public profile checker">
+  <title>TikTok Checker</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>TikTok Checker</h1>
+      <p>Julkisen TikTok-profiilin region- ja kielitiedot.</p>
+    </header>
+
+    <form id="form" class="search">
+      <span>@</span>
+      <input id="username" placeholder="käyttäjänimi" autocomplete="off" spellcheck="false" required>
+      <button id="searchBtn" type="submit">Hae</button>
+    </form>
+
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <section id="result" class="card hidden">
+      <div class="profile">
+        <div id="avatarFallback" class="avatar fallback">?</div>
+        <img id="avatar" class="avatar hidden" alt="">
+        <div class="profileText">
+          <div id="nickname" class="nickname"></div>
+          <div id="handle" class="handle"></div>
+        </div>
+      </div>
+
+      <div class="mainInfo">
+        <div class="infoBox">
+          <span>Region</span>
+          <strong id="region">N/A</strong>
+        </div>
+        <div class="infoBox">
+          <span>Kieli</span>
+          <strong id="language">N/A</strong>
+        </div>
+      </div>
+
+      <div id="bioWrap" class="bioWrap hidden">
+        <span>Bio</span>
+        <p id="bio"></p>
+      </div>
+
+      <div class="stats">
+        <div><strong id="followers">–</strong><span>Seuraajat</span></div>
+        <div><strong id="following">–</strong><span>Seuratut</span></div>
+        <div><strong id="likes">–</strong><span>Tykkäykset</span></div>
+        <div><strong id="videos">–</strong><span>Videot</span></div>
+      </div>
+
+      <details>
+        <summary>Lisätiedot</summary>
+        <div class="details">
+          <div><span>User ID</span><code id="userId">–</code></div>
+          <div><span>SecUID</span><code id="secUid">–</code></div>
+          <div><span>Tili luotu</span><b id="created">–</b></div>
+          <div><span>Yksityinen tili</span><b id="privateAccount">–</b></div>
+          <div><span>Vahvistettu</span><b id="verified">–</b></div>
+          <div><span>Datalähde</span><b id="source">–</b></div>
+        </div>
+      </details>
+
+      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
+    </section>
+
+    <section class="notice">
+      <strong>Huom.</strong> Region on TikTokin julkisessa profiilidatassa näkyvä tilikohtainen aluekoodi.
+      Se ei ole GPS-sijainti eikä todista käyttäjän tämänhetkistä fyysistä sijaintia.
+    </section>
+
+    <footer>Open source · ei API-avainta · ei käyttäjätietojen tallennusta</footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

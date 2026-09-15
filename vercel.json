@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/profile",
+      "destination": "/api/profile"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
+  ]
+}

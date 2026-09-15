@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="Open source TikTok public profile checker">
+  <meta name="theme-color" content="#f6f7f8">
   <title>TikTok Checker</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
@@ -12,7 +11,7 @@
   <main class="wrap">
     <header>
       <h1>TikTok Checker</h1>
-      <p>Julkisen TikTok-profiilin region- ja kielitiedot.</p>
+      <p>Julkisten profiilitietojen tarkistus.</p>
     </header>
 
     <form id="form" class="search">
@@ -27,18 +26,18 @@
       <div class="profile">
         <div id="avatarFallback" class="avatar fallback">?</div>
         <img id="avatar" class="avatar hidden" alt="">
-        <div class="profileText">
+        <div>
           <div id="nickname" class="nickname"></div>
           <div id="handle" class="handle"></div>
         </div>
       </div>
 
       <div class="mainInfo">
-        <div class="infoBox">
-          <span>Region</span>
+        <div>
+          <span>Maa / region</span>
           <strong id="region">N/A</strong>
         </div>
-        <div class="infoBox">
+        <div>
           <span>Kieli</span>
           <strong id="language">N/A</strong>
         </div>
@@ -64,19 +63,14 @@
           <div><span>Tili luotu</span><b id="created">–</b></div>
           <div><span>Yksityinen tili</span><b id="privateAccount">–</b></div>
           <div><span>Vahvistettu</span><b id="verified">–</b></div>
-          <div><span>Datalähde</span><b id="source">–</b></div>
+          <div><span>Region-lähde</span><b id="regionSource">–</b></div>
         </div>
       </details>
 
-      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
+      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">
+        Avaa TikTok-profiili
+      </a>
     </section>
-
-    <section class="notice">
-      <strong>Huom.</strong> Region on TikTokin julkisessa profiilidatassa näkyvä tilikohtainen aluekoodi.
-      Se ei ole GPS-sijainti eikä todista käyttäjän tämänhetkistä fyysistä sijaintia.
-    </section>
-
-    <footer>Open source · ei API-avainta · ei käyttäjätietojen tallennusta</footer>
   </main>
 
   <script src="/app.js"></script>

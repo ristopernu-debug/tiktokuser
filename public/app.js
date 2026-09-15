@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 
-const regionNames = new Intl.DisplayNames(["fi"], {type:"region"});
-const languageNames = new Intl.DisplayNames(["fi"], {type:"language"});
+const regionNames = new Intl.DisplayNames(["fi"], { type: "region" });
+const languageNames = new Intl.DisplayNames(["fi"], { type: "language" });
 
-function cleanUsername(value="") {
+function cleanUsername(value = "") {
   return value.trim()
     .replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i, "")
     .replace(/^@/, "")
@@ -13,13 +13,13 @@ function cleanUsername(value="") {
 function compact(value) {
   const n = Number(value);
   return Number.isFinite(n)
-    ? new Intl.NumberFormat("fi-FI",{notation:"compact",maximumFractionDigits:1}).format(n)
+    ? new Intl.NumberFormat("fi-FI", { notation: "compact", maximumFractionDigits: 1 }).format(n)
     : "–";
 }
 
-function yesNo(v) {
-  if (v === true) return "Kyllä";
-  if (v === false) return "Ei";
+function yesNo(value) {
+  if (value === true) return "Kyllä";
+  if (value === false) return "Ei";
   return "–";
 }
 
@@ -29,21 +29,25 @@ function prettyRegion(code) {
   try {
     const name = regionNames.of(c);
     return name && name !== c ? `${c} · ${name}` : c;
-  } catch { return c; }
+  } catch {
+    return c;
+  }
 }
 
 function prettyLanguage(code) {
   if (!code) return "N/A";
-  const c = String(code).toLowerCase().replace("_","-");
+  const c = String(code).toLowerCase().replace("_", "-");
   try {
     const base = c.split("-")[0];
     const name = languageNames.of(base);
     return name ? `${c} · ${name}` : c;
-  } catch { return c; }
+  } catch {
+    return c;
+  }
 }
 
-$("form").addEventListener("submit", async e => {
-  e.preventDefault();
+$("form").addEventListener("submit", async event => {
+  event.preventDefault();
 
   const username = cleanUsername($("username").value);
   if (!username) return;
@@ -51,29 +55,36 @@ $("form").addEventListener("submit", async e => {
   $("username").value = username;
   $("result").classList.add("hidden");
   $("status").className = "status";
-  $("status").textContent = "Haetaan TikTokin julkista profiilidataa…";
+  $("status").textContent = "Haetaan julkisia profiilitietoja…";
   $("searchBtn").disabled = true;
 
   try {
-    const res = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
-    const data = await res.json();
+    const response = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
+    const data = await response.json();
 
-    if (!res.ok) throw new Error(data.error || "Haku epäonnistui.");
+    if (!response.ok) throw new Error(data.error || "Haku epäonnistui.");
 
-    const u = data.user || {};
-    const s = data.stats || {};
+    const user = data.user || {};
+    const stats = data.stats || {};
 
-    $("nickname").textContent = u.nickname || username;
-    $("handle").textContent = `@${u.uniqueId || username}`;
-    $("region").textContent = prettyRegion(u.region);
-    $("language").textContent = prettyLanguage(u.language);
+    $("nickname").textContent = user.nickname || username;
+    $("handle").textContent = `@${user.uniqueId || username}`;
+    $("region").textContent = prettyRegion(user.region);
+    $("language").textContent = prettyLanguage(user.language);
+    $("regionSource").textContent =
+      data.regionSource === "profile"
+        ? "TikTok-profiili"
+        : data.regionSource === "video"
+        ? "Julkisen videon metadata"
+        : "Ei saatavilla";
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");
-    fallback.textContent = (u.nickname || username).charAt(0).toUpperCase();
+    fallback.textContent = (user.nickname || username).charAt(0).toUpperCase();
 
-    if (u.avatar) {
-      avatar.src = u.avatar;
+    if (user.avatar) {
+      avatar.src = user.avatar;
+      avatar.alt = `${user.nickname || username} profiilikuva`;
       avatar.classList.remove("hidden");
       fallback.classList.add("hidden");
     } else {
@@ -81,34 +92,34 @@ $("form").addEventListener("submit", async e => {
       fallback.classList.remove("hidden");
     }
 
-    if (u.signature) {
-      $("bio").textContent = u.signature;
+    if (user.signature) {
+      $("bio").textContent = user.signature;
       $("bioWrap").classList.remove("hidden");
     } else {
       $("bioWrap").classList.add("hidden");
     }
 
-    $("followers").textContent = compact(s.followerCount);
-    $("following").textContent = compact(s.followingCount);
-    $("likes").textContent = compact(s.heartCount ?? s.heart);
-    $("videos").textContent = compact(s.videoCount);
+    $("followers").textContent = compact(stats.followerCount);
+    $("following").textContent = compact(stats.followingCount);
+    $("likes").textContent = compact(stats.heartCount);
+    $("videos").textContent = compact(stats.videoCount);
 
-    $("userId").textContent = u.id || "–";
-    $("secUid").textContent = u.secUid || "–";
-    $("created").textContent = u.createTime
-      ? new Date(Number(u.createTime) * 1000).toLocaleString("fi-FI")
+    $("userId").textContent = user.id || "–";
+    $("secUid").textContent = user.secUid || "–";
+    $("created").textContent = user.createTime
+      ? new Date(Number(user.createTime) * 1000).toLocaleString("fi-FI")
       : "–";
-    $("privateAccount").textContent = yesNo(u.privateAccount);
-    $("verified").textContent = yesNo(u.verified);
-    $("source").textContent = data.source || "TikTok public profile";
+    $("privateAccount").textContent = yesNo(user.privateAccount);
+    $("verified").textContent = yesNo(user.verified);
 
-    $("profileLink").href = `https://www.tiktok.com/@${encodeURIComponent(u.uniqueId || username)}`;
+    $("profileLink").href =
+      `https://www.tiktok.com/@${encodeURIComponent(user.uniqueId || username)}`;
 
     $("result").classList.remove("hidden");
     $("status").textContent = "";
-  } catch (err) {
+  } catch (error) {
     $("status").className = "status error";
-    $("status").textContent = err?.message || "Haku epäonnistui.";
+    $("status").textContent = error?.message || "Haku epäonnistui.";
   } finally {
     $("searchBtn").disabled = false;
   }

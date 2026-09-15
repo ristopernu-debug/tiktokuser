@@ -1,88 +1,32 @@
-# TikTok Clean Checker
+# TikTok Checker
 
-Avoimen lähdekoodin TikTok-julkisten profiilitietojen tarkistin.
+Open source -TikTok-profiilitarkistin ilman TikMatrixia tai maksullista profiili-API:a.
 
-## Ei kolmannen osapuolen API:a
+## Region-logiikka
 
-Tämä projekti EI käytä:
-- TikMatrixia
-- Omar-Thingia
-- Apifya
-- maksullista API:a
-- API-avaimia
+1. Käytetään TikTokin julkisen profiilidatan `region`-kenttää, jos se löytyy.
+2. Jos sitä ei ole, tarkistetaan enintään kolme julkista videota ja etsitään
+   TikTokin videometadatasta `locationCreated`.
+3. Jos kumpaakaan ei saada, näytetään N/A.
 
-Backend hakee suoraan TikTokin julkisen profiilisivun ja lukee sivun omaan
-`__UNIVERSAL_DATA_FOR_REHYDRATION__` / `SIGI_STATE` JSONiin sisältyvät julkiset tiedot.
+Maatietoa ei päätellä käyttäjänimestä, biosta tai language-kentästä.
 
-Tyypillisiä kenttiä:
-- region
-- language
-- nickname
-- signature
-- avatar
-- user ID
-- SecUID
-- createTime
-- followerCount
-- followingCount
-- heartCount
-- videoCount
-
-## Miksi tämä ei voi olla pelkkä GitHub Pages?
-
-Selain ei voi luotettavasti hakea TikTokin profiilisivua suoraan CORS-rajoitusten vuoksi.
-Siksi projektissa on pieni `/api/profile` serverless-funktio.
-
-Koko koodi voi silti olla GitHubissa ja Vercelin Hobby-tasolla sitä voi ajaa
-ilman erillistä maksullista API-palvelua.
+`locationCreated` kuvaa videon TikTok-metadatassa olevaa luontialuetta. Se ei ole
+käyttäjän GPS- tai reaaliaikainen sijainti.
 
 ## Julkaisu
 
-### 1. GitHub
+Tämä versio tarvitsee Vercelin serverless-funktion.
 
-Pura ZIP ja vie KAIKKI tiedostot samaan repositoryyn.
+Repository:
 
-Rakenteen pitää olla:
-
-```
-api/
-  profile.js
-public/
-  index.html
-  styles.css
-  app.js
+api/profile.js
+public/index.html
+public/styles.css
+public/app.js
 package.json
 vercel.json
-README.md
-LICENSE
-```
 
-### 2. Vercel
-
-1. Mene https://vercel.com/
-2. Kirjaudu GitHubilla.
-3. Add New -> Project.
-4. Valitse tämä GitHub-repository.
-5. Framework Preset: Other.
-6. Deploy.
-
-API-avaimia tai Environment Variables -asetuksia EI tarvita.
-
-## Region-tiedon merkitys
-
-`region` on TikTokin julkiseen profiiliobjektiin sisältyvä tilikohtainen aluekoodi,
-kun TikTok sen palauttaa. Se ei ole GPS-sijainti eikä välttämättä käyttäjän
-nykyinen fyysinen sijainti.
-
-Jos TikTok ei palauta region- tai language-kenttää, sovellus näyttää N/A eikä
-arvaa tietoa.
-
-## Huomio toimintavarmuudesta
-
-Tämä perustuu TikTokin julkisen verkkosivun rakenteeseen, joka voi muuttua.
-TikTok voi myös käyttää WAF-/rate-limit-suojausta, jolloin yksittäinen haku voi
-epäonnistua. Koodissa on oEmbed-fallback profiilin nimen varmistamiseen.
-
-## Lisenssi
-
-MIT
+Vercel:
+- Framework Preset: Other
+- API-avaimia ei tarvita.

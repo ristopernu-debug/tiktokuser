@@ -1,6 +1,8 @@
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-function cleanUsername(value="") {
+function cleanUsername(value = "") {
   return String(value)
     .trim()
     .replace(/^@/, "")
@@ -8,185 +10,271 @@ function cleanUsername(value="") {
     .slice(0, 64);
 }
 
-function findScriptJson(html, id) {
-  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(`<script[^>]+id=["']${escaped}["'][^>]*>([\\s\\S]*?)<\\/script>`, "i");
-  const m = html.match(re);
-  if (!m) return null;
-
-  let txt = m[1].trim();
-  txt = txt.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-  try { return JSON.parse(txt); } catch { return null; }
+function readJsonScript(html, id) {
+  const safe = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(`<script[^>]+id=["']${safe}["'][^>]*>([\\s\\S]*?)<\\/script>`, "i")
+  );
+  if (!match) return null;
+  try { return JSON.parse(match[1].trim()); } catch { return null; }
 }
 
-function deepFindUserInfo(obj) {
-  if (!obj || typeof obj !== "object") return null;
+function findUserInfo(data) {
+  if (!data || typeof data !== "object") return null;
 
-  const direct = obj?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo;
-  if (direct?.user) return direct;
+  const detail = data?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo;
+  if (detail?.user) return detail;
 
-  const userModule = obj?.UserModule;
-  if (userModule?.users) {
-    const users = Object.values(userModule.users);
-    if (users.length) {
-      const user = users[0];
-      let stats = null;
-      if (userModule.stats) {
-        stats = Object.values(userModule.stats)[0] || null;
-      }
-      return {user, stats};
+  if (data?.UserModule?.users) {
+    const user = Object.values(data.UserModule.users)[0];
+    const stats = data.UserModule.stats
+      ? Object.values(data.UserModule.stats)[0]
+      : null;
+    if (user) return { user, stats };
+  }
+  return null;
+}
+
+function regexValue(html, name) {
+  const match = html.match(new RegExp(`"${name}"\\s*:\\s*"([^"]*)"`, "i"));
+  return match ? match[1] : null;
+}
+
+function regexNumber(html, name) {
+  const match = html.match(new RegExp(`"${name}"\\s*:\\s*(\\d+)`, "i"));
+  return match ? Number(match[1]) : null;
+}
+
+function regexBool(html, name) {
+  const match = html.match(new RegExp(`"${name}"\\s*:\\s*(true|false)`, "i"));
+  return match ? match[1] === "true" : null;
+}
+
+function regexFallback(html) {
+  const user = {
+    id: regexValue(html, "id"),
+    secUid: regexValue(html, "secUid"),
+    uniqueId: regexValue(html, "uniqueId"),
+    nickname: regexValue(html, "nickname"),
+    signature: regexValue(html, "signature"),
+    avatarLarger: regexValue(html, "avatarLarger"),
+    avatarMedium: regexValue(html, "avatarMedium"),
+    avatarThumb: regexValue(html, "avatarThumb"),
+    region: regexValue(html, "region"),
+    language: regexValue(html, "language"),
+    createTime: regexNumber(html, "createTime"),
+    privateAccount: regexBool(html, "privateAccount"),
+    verified: regexBool(html, "verified")
+  };
+
+  if (!user.uniqueId && !user.id) return null;
+
+  return {
+    user,
+    stats: {
+      followerCount: regexNumber(html, "followerCount"),
+      followingCount: regexNumber(html, "followingCount"),
+      heartCount: regexNumber(html, "heartCount") ?? regexNumber(html, "heart"),
+      videoCount: regexNumber(html, "videoCount")
+    }
+  };
+}
+
+function collectVideoIdsFromObject(value, out, depth = 0) {
+  if (!value || depth > 12 || out.size >= 10) return;
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectVideoIdsFromObject(item, out, depth + 1);
+    return;
+  }
+
+  if (typeof value !== "object") return;
+
+  // Known SSR shapes often contain ItemModule keyed by aweme/video id.
+  if (value.ItemModule && typeof value.ItemModule === "object") {
+    for (const key of Object.keys(value.ItemModule)) {
+      if (/^\d{15,22}$/.test(key)) out.add(key);
+    }
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    if (
+      ["id", "awemeId", "aweme_id", "itemId", "videoId"].includes(key) &&
+      /^\d{15,22}$/.test(String(child))
+    ) {
+      out.add(String(child));
+    }
+    if (out.size < 10) collectVideoIdsFromObject(child, out, depth + 1);
+  }
+}
+
+function collectVideoIds(html, ...objects) {
+  const ids = new Set();
+
+  for (const obj of objects) {
+    collectVideoIdsFromObject(obj, ids);
+  }
+
+  const patterns = [
+    /\/video\/(\d{15,22})/g,
+    /"awemeId"\s*:\s*"(\d{15,22})"/g,
+    /"itemId"\s*:\s*"(\d{15,22})"/g
+  ];
+
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(html)) && ids.size < 10) ids.add(m[1]);
+  }
+
+  return [...ids];
+}
+
+function findLocationCreated(data) {
+  if (!data || typeof data !== "object") return null;
+
+  const candidates = [
+    data?.__DEFAULT_SCOPE__?.["webapp.video-detail"]?.itemInfo?.itemStruct,
+    data?.ItemModule ? Object.values(data.ItemModule)[0] : null
+  ].filter(Boolean);
+
+  for (const item of candidates) {
+    const loc = item?.locationCreated ?? item?.location_created;
+    if (typeof loc === "string" && /^[A-Za-z]{2}$/.test(loc)) {
+      return loc.toUpperCase();
     }
   }
 
   return null;
 }
 
-function regexFallback(html) {
-  const blockMatch = html.match(/webapp\.user-detail[\s\S]{0,250000}/i);
-  const block = blockMatch ? blockMatch[0] : html;
-
-  function str(name) {
-    const m = block.match(new RegExp(`"${name}"\\s*:\\s*"([^"]*)"`, "i"));
-    return m ? m[1] : null;
-  }
-  function num(name) {
-    const m = block.match(new RegExp(`"${name}"\\s*:\\s*(\\d+)`, "i"));
-    return m ? Number(m[1]) : null;
-  }
-  function bool(name) {
-    const m = block.match(new RegExp(`"${name}"\\s*:\\s*(true|false)`, "i"));
-    return m ? m[1] === "true" : null;
-  }
-
-  const user = {
-    id: str("id"),
-    uniqueId: str("uniqueId"),
-    nickname: str("nickname"),
-    signature: str("signature"),
-    avatarLarger: str("avatarLarger"),
-    avatarMedium: str("avatarMedium"),
-    secUid: str("secUid"),
-    region: str("region"),
-    language: str("language"),
-    createTime: num("createTime"),
-    privateAccount: bool("privateAccount"),
-    verified: bool("verified")
-  };
-
-  const stats = {
-    followerCount: num("followerCount"),
-    followingCount: num("followingCount"),
-    heartCount: num("heartCount") ?? num("heart"),
-    videoCount: num("videoCount")
-  };
-
-  if (!user.uniqueId && !user.id) return null;
-  return {user, stats};
-}
-
-async function fetchOEmbed(username) {
-  const profileUrl = `https://www.tiktok.com/@${encodeURIComponent(username)}`;
-  const url = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
-  const r = await fetch(url, {headers:{"User-Agent":UA,"Accept":"application/json"}});
-  if (!r.ok) return null;
-  try { return await r.json(); } catch { return null; }
-}
-
-async function fetchProfileHtml(username) {
-  const url = `https://www.tiktok.com/@${encodeURIComponent(username)}`;
-  const r = await fetch(url, {
-    redirect:"follow",
-    headers:{
-      "User-Agent":UA,
-      "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language":"en-US,en;q=0.9",
-      "Cache-Control":"no-cache",
-      "Pragma":"no-cache"
+async function fetchHtml(url) {
+  const response = await fetch(url, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": UA,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Cache-Control": "no-cache"
     }
   });
 
-  if (!r.ok) throw new Error(`TikTok returned HTTP ${r.status}`);
-  return await r.text();
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await response.text();
+}
+
+async function getVideoRegion(username, videoIds) {
+  // Only a few public posts are checked to keep requests light.
+  for (const videoId of videoIds.slice(0, 3)) {
+    try {
+      const html = await fetchHtml(
+        `https://www.tiktok.com/@${encodeURIComponent(username)}/video/${videoId}`
+      );
+
+      const universal = readJsonScript(html, "__UNIVERSAL_DATA_FOR_REHYDRATION__");
+      const sigi =
+        readJsonScript(html, "SIGI_STATE") ||
+        readJsonScript(html, "sigi-persisted-data");
+
+      const region =
+        findLocationCreated(universal) ||
+        findLocationCreated(sigi) ||
+        (() => {
+          const match = html.match(/"locationCreated"\s*:\s*"([A-Za-z]{2})"/i);
+          return match ? match[1].toUpperCase() : null;
+        })();
+
+      if (region) return region;
+    } catch {
+      // Continue to next public post.
+    }
+  }
+
+  return null;
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=300");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=300");
 
   if (req.method !== "GET") {
-    return res.status(405).json({error:"Vain GET-pyyntö on sallittu."});
+    return res.status(405).json({ error: "Vain GET-pyyntö on sallittu." });
   }
 
   const username = cleanUsername(req.query.username);
   if (!username) {
-    return res.status(400).json({error:"Virheellinen TikTok-käyttäjänimi."});
+    return res.status(400).json({ error: "Virheellinen TikTok-käyttäjänimi." });
   }
 
   try {
-    const [html, oembed] = await Promise.all([
-      fetchProfileHtml(username),
-      fetchOEmbed(username).catch(() => null)
-    ]);
+    const profileHtml = await fetchHtml(
+      `https://www.tiktok.com/@${encodeURIComponent(username)}`
+    );
 
-    const universal = findScriptJson(html, "__UNIVERSAL_DATA_FOR_REHYDRATION__");
-    const sigi = findScriptJson(html, "SIGI_STATE") || findScriptJson(html, "sigi-persisted-data");
+    const universal = readJsonScript(
+      profileHtml,
+      "__UNIVERSAL_DATA_FOR_REHYDRATION__"
+    );
+    const sigi =
+      readJsonScript(profileHtml, "SIGI_STATE") ||
+      readJsonScript(profileHtml, "sigi-persisted-data");
 
-    let info =
-      deepFindUserInfo(universal) ||
-      deepFindUserInfo(sigi) ||
-      regexFallback(html);
+    const info =
+      findUserInfo(universal) ||
+      findUserInfo(sigi) ||
+      regexFallback(profileHtml);
 
     if (!info?.user) {
-      if (oembed) {
-        return res.status(200).json({
-          source:"TikTok oEmbed fallback",
-          user:{
-            uniqueId:username,
-            nickname:oembed.author_name || username,
-            region:null,
-            language:null,
-            signature:null,
-            avatar:null
-          },
-          stats:{},
-          warning:"TikTok ei palauttanut profiilisivun region-dataa tällä haulla."
-        });
-      }
       return res.status(404).json({
-        error:"Julkista profiilidataa ei löytynyt. Tili voi olla yksityinen, poistettu tai TikTok esti automaattisen haun."
+        error:
+          "Julkista profiilidataa ei löytynyt. TikTok voi estää automaattisen haun tai profiili ei ole saatavilla."
       });
     }
 
-    const u = info.user || {};
-    const s = info.stats || info.statsV2 || {};
+    const user = info.user || {};
+    const stats = info.stats || {};
+
+    let region = user.region || null;
+    let regionSource = region ? "profile" : null;
+
+    if (!region) {
+      const videoIds = collectVideoIds(profileHtml, universal, sigi);
+      const videoRegion = await getVideoRegion(user.uniqueId || username, videoIds);
+
+      if (videoRegion) {
+        region = videoRegion;
+        regionSource = "video";
+      }
+    }
 
     return res.status(200).json({
-      source:"TikTok public profile HTML",
-      user:{
-        id:u.id ?? null,
-        secUid:u.secUid ?? null,
-        uniqueId:u.uniqueId ?? username,
-        nickname:u.nickname ?? oembed?.author_name ?? username,
-        signature:u.signature ?? null,
-        avatar:u.avatarLarger ?? u.avatarMedium ?? u.avatarThumb ?? null,
-        region:u.region ?? null,
-        language:u.language ?? null,
-        createTime:u.createTime ?? null,
-        privateAccount:u.privateAccount ?? null,
-        verified:u.verified ?? null
+      regionSource,
+      user: {
+        id: user.id ?? null,
+        secUid: user.secUid ?? null,
+        uniqueId: user.uniqueId ?? username,
+        nickname: user.nickname ?? username,
+        signature: user.signature ?? null,
+        avatar:
+          user.avatarLarger ??
+          user.avatarMedium ??
+          user.avatarThumb ??
+          null,
+        region,
+        language: user.language ?? null,
+        createTime: user.createTime ?? null,
+        privateAccount: user.privateAccount ?? null,
+        verified: user.verified ?? null
       },
-      stats:{
-        followerCount:s.followerCount ?? null,
-        followingCount:s.followingCount ?? null,
-        heartCount:s.heartCount ?? s.heart ?? null,
-        videoCount:s.videoCount ?? null
+      stats: {
+        followerCount: stats.followerCount ?? null,
+        followingCount: stats.followingCount ?? null,
+        heartCount: stats.heartCount ?? stats.heart ?? null,
+        videoCount: stats.videoCount ?? null
       }
     });
-
-  } catch (err) {
+  } catch {
     return res.status(502).json({
-      error:"TikTok-profiilin haku epäonnistui. TikTok voi hetkellisesti estää automaattisia pyyntöjä.",
-      detail:String(err?.message || err)
+      error: "TikTok-profiilin haku epäonnistui."
     });
   }
 }

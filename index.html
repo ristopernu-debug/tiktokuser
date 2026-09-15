@@ -4,13 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <title>TikTok User Lookup</title>
+  <meta name="description" content="Avoimen lähdekoodin TikTok-julkisten profiilitietojen tarkistin.">
+  <title>TikTok Public Account Checker</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="wrap">
-    <h1>TikTok User</h1>
-    <p class="sub">Hae julkiset profiilitiedot käyttäjänimellä.</p>
+    <header class="head">
+      <div>
+        <h1>TikTok Checker</h1>
+        <p>Julkisten profiilitietojen tarkistus.</p>
+      </div>
+      <span class="opensource">Open source</span>
+    </header>
 
     <form id="form" class="search">
       <span>@</span>
@@ -23,26 +29,39 @@
     <section id="result" class="card hidden">
       <div class="profile">
         <img id="avatar" class="avatar" alt="">
-        <div class="profileText">
+        <div>
           <div id="nickname" class="nickname"></div>
           <div id="handle" class="handle"></div>
         </div>
       </div>
 
-      <div class="locationRow">
+      <div class="primaryInfo">
         <div>
-          <div class="label">Maa</div>
-          <div id="country" class="location"></div>
+          <span>Maa</span>
+          <strong id="country">–</strong>
+          <small id="countrySource">Lähde: TikMatrix</small>
         </div>
         <div>
-          <div class="label">Kieli</div>
-          <div id="language" class="language"></div>
+          <span>Kieli</span>
+          <strong id="language">–</strong>
+          <small>Lähde: TikMatrix</small>
         </div>
       </div>
 
+      <div class="regionBox">
+        <div>
+          <span class="regionLabel">Active Region</span>
+          <strong id="activeRegion">Ei saatavilla</strong>
+        </div>
+        <small>
+          TikMatrix dokumentoi erillisen region-haun, mutta sen parametreja ja vastausmuotoa
+          ei ole julkaistu. Arvoa ei siksi arvata.
+        </small>
+      </div>
+
       <div id="aboutWrap" class="aboutWrap hidden">
-        <div class="label">Bio</div>
-        <div id="about" class="about"></div>
+        <span>Bio</span>
+        <p id="about"></p>
       </div>
 
       <div class="stats">
@@ -62,10 +81,21 @@
         </div>
       </details>
 
-      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
+      <div class="actions">
+        <a id="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
+        <a href="https://user.tikmatrix.com/" target="_blank" rel="noopener noreferrer">Tarkista lähteestä</a>
+      </div>
     </section>
 
-    <p class="note">Maa on julkisista signaaleista johdettu arvio, ei tarkka tai reaaliaikainen sijainti.</p>
+    <section class="notice">
+      <strong>Huom.</strong> Maa ja kieli ovat ulkoisen palvelun palauttamia julkisia
+      profiilitietoja tai arvioita. Ne eivät todista käyttäjän fyysistä sijaintia,
+      henkilöllisyyttä tai sitä, onko tili huijaustili.
+    </section>
+
+    <footer>
+      Data: TikMatrix · Ei API-avainta · Ei tallennusta
+    </footer>
   </main>
 
   <script src="app.js"></script>

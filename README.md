@@ -1,44 +1,61 @@
-# TikTok User Lookup — GitHub Pages
+# TikTok Public Account Checker
 
-Valmis minimalistinen käyttöliittymä, joka hakee julkiset TikTok-käyttäjätiedot
-TikMatrixin avoimesta API:sta.
+Avoimen lähdekoodin, täysin staattinen GitHub Pages -sovellus TikTokin julkisten
+profiilitietojen tarkistamiseen.
 
-## Asennus GitHubiin
+## Ominaisuudet
 
-Korvaa repositorion juuresta nämä tiedostot:
+- profiilikuva
+- näyttönimi ja käyttäjänimi
+- maa
+- kieli
+- bio
+- seuraajat, seuratut, tykkäykset ja videot
+- User ID, SecUID, tilin luontiaika ja ystävien määrä
+- suora linkki TikTok-profiiliin
+- lähdemerkintä
+- ei API-avainta
+- ei käyttäjätietojen tallennusta
+
+## Tietolähde
+
+Sovellus käyttää TikMatrixin avointa endpointia:
+
+`https://user.tikmatrix.com/api/user?username=KAYTTAJANIMI`
+
+TikMatrixin dokumentaation mukaan endpointit tukevat CORSia eikä API-avainta tarvita.
+
+## Active Region
+
+TikMatrixin dokumentaatio mainitsee `/api/region`-endpointin ja sille
+3 pyyntöä/minuutti -rajan, mutta tällä hetkellä dokumentaatiossa ei julkaista sen
+pyyntöparametreja tai vastausmuotoa. Sovellus ei siksi arvaa Active Region -arvoa.
+
+Kun endpointin käyttö dokumentoidaan luotettavasti, sen voi lisätä ilman että
+käyttöliittymää tarvitsee rakentaa uudelleen.
+
+## GitHub Pages
+
+Repositorion juureen tarvitaan:
 
 - `index.html`
 - `styles.css`
 - `app.js`
+- `README.md`
+- `LICENSE`
 
-GitHub Pages päivittyy automaattisesti.
+Settings → Pages:
 
-## Haku
+- Source: Deploy from a branch
+- Branch: main
+- Folder: /(root)
 
-Sovellus kutsuu:
+## Tietosuoja ja tulkinta
 
-`https://user.tikmatrix.com/api/user?username=KAYTTAJANIMI`
+Maa- tai kielitieto ei osoita käyttäjän fyysistä tai reaaliaikaista sijaintia.
+Niitä ei pidä käyttää yksin päätelmänä käyttäjän henkilöllisyydestä tai
+luotettavuudesta.
 
-API ei vaadi avainta.
+## Lisenssi
 
-## Näytettävät tiedot
-
-- profiilikuva
-- nickname / käyttäjänimi
-- maa
-- kieli
-- bio
-- seuraajat
-- seuratut
-- tykkäykset
-- videoiden määrä
-- ystävät
-- User ID
-- SecUID
-- tilin luontiaika
-
-Maa on lähdepalvelun julkisista signaaleista tekemä arvio, ei tarkka sijainti.
-
-## Rate limit
-
-TikMatrix rajoittaa username-hakuja. Jos saat 503-virheen, odota hetki ja yritä uudelleen.
+MIT

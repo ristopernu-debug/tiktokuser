@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 
-const regionNames = new Intl.DisplayNames(["fi"], { type: "region" });
-const languageNames = new Intl.DisplayNames(["fi"], { type: "language" });
+const regionNames = new Intl.DisplayNames(["fi"], {type:"region"});
+const languageNames = new Intl.DisplayNames(["fi"], {type:"language"});
 
-function cleanUsername(value = "") {
+function cleanUsername(value="") {
   return value.trim()
     .replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i, "")
     .replace(/^@/, "")
@@ -13,13 +13,13 @@ function cleanUsername(value = "") {
 function compact(value) {
   const n = Number(value);
   return Number.isFinite(n)
-    ? new Intl.NumberFormat("fi-FI", { notation: "compact", maximumFractionDigits: 1 }).format(n)
+    ? new Intl.NumberFormat("fi-FI",{notation:"compact",maximumFractionDigits:1}).format(n)
     : "–";
 }
 
-function yesNo(value) {
-  if (value === true) return "Kyllä";
-  if (value === false) return "Ei";
+function yesNo(v) {
+  if (v === true) return "Kyllä";
+  if (v === false) return "Ei";
   return "–";
 }
 
@@ -27,27 +27,22 @@ function prettyRegion(code) {
   if (!code) return "N/A";
   const c = String(code).toUpperCase();
   try {
-    const name = regionNames.of(c);
-    return name && name !== c ? `${c} · ${name}` : c;
-  } catch {
-    return c;
-  }
+    const n = regionNames.of(c);
+    return n && n !== c ? `${c} · ${n}` : c;
+  } catch { return c; }
 }
 
 function prettyLanguage(code) {
   if (!code) return "N/A";
-  const c = String(code).toLowerCase().replace("_", "-");
+  const c = String(code).toLowerCase().replace("_","-");
   try {
-    const base = c.split("-")[0];
-    const name = languageNames.of(base);
-    return name ? `${c} · ${name}` : c;
-  } catch {
-    return c;
-  }
+    const n = languageNames.of(c.split("-")[0]);
+    return n ? `${c} · ${n}` : c;
+  } catch { return c; }
 }
 
-$("form").addEventListener("submit", async event => {
-  event.preventDefault();
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
 
   const username = cleanUsername($("username").value);
   if (!username) return;
@@ -55,36 +50,34 @@ $("form").addEventListener("submit", async event => {
   $("username").value = username;
   $("result").classList.add("hidden");
   $("status").className = "status";
-  $("status").textContent = "Haetaan julkisia profiilitietoja…";
+  $("status").textContent = "Haetaan profiilia ja videometadataa…";
   $("searchBtn").disabled = true;
 
   try {
-    const response = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
-    const data = await response.json();
+    const res = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Haku epäonnistui.");
 
-    if (!response.ok) throw new Error(data.error || "Haku epäonnistui.");
+    const u = data.user || {};
+    const s = data.stats || {};
 
-    const user = data.user || {};
-    const stats = data.stats || {};
-
-    $("nickname").textContent = user.nickname || username;
-    $("handle").textContent = `@${user.uniqueId || username}`;
-    $("region").textContent = prettyRegion(user.region);
-    $("language").textContent = prettyLanguage(user.language);
+    $("nickname").textContent = u.nickname || username;
+    $("handle").textContent = `@${u.uniqueId || username}`;
+    $("region").textContent = prettyRegion(u.region);
+    $("language").textContent = prettyLanguage(u.language);
     $("regionSource").textContent =
-      data.regionSource === "profile"
-        ? "TikTok-profiili"
-        : data.regionSource === "video"
-        ? "Julkisen videon metadata"
-        : "Ei saatavilla";
+      data.regionSource === "profile" ? "TikTok-profiilidata" :
+      data.regionSource === "video_metadata" ? "TikTok-videometadata" :
+      "Ei saatavilla";
+    $("checkedVideos").textContent = String(data.checkedVideos ?? 0);
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");
-    fallback.textContent = (user.nickname || username).charAt(0).toUpperCase();
+    fallback.textContent = (u.nickname || username).charAt(0).toUpperCase();
 
-    if (user.avatar) {
-      avatar.src = user.avatar;
-      avatar.alt = `${user.nickname || username} profiilikuva`;
+    if (u.avatar) {
+      avatar.src = u.avatar;
+      avatar.alt = `${u.nickname || username} profiilikuva`;
       avatar.classList.remove("hidden");
       fallback.classList.add("hidden");
     } else {
@@ -92,34 +85,32 @@ $("form").addEventListener("submit", async event => {
       fallback.classList.remove("hidden");
     }
 
-    if (user.signature) {
-      $("bio").textContent = user.signature;
+    if (u.signature) {
+      $("bio").textContent = u.signature;
       $("bioWrap").classList.remove("hidden");
     } else {
       $("bioWrap").classList.add("hidden");
     }
 
-    $("followers").textContent = compact(stats.followerCount);
-    $("following").textContent = compact(stats.followingCount);
-    $("likes").textContent = compact(stats.heartCount);
-    $("videos").textContent = compact(stats.videoCount);
+    $("followers").textContent = compact(s.followerCount);
+    $("following").textContent = compact(s.followingCount);
+    $("likes").textContent = compact(s.heartCount);
+    $("videos").textContent = compact(s.videoCount);
 
-    $("userId").textContent = user.id || "–";
-    $("secUid").textContent = user.secUid || "–";
-    $("created").textContent = user.createTime
-      ? new Date(Number(user.createTime) * 1000).toLocaleString("fi-FI")
+    $("userId").textContent = u.id || "–";
+    $("secUid").textContent = u.secUid || "–";
+    $("created").textContent = u.createTime
+      ? new Date(Number(u.createTime) * 1000).toLocaleString("fi-FI")
       : "–";
-    $("privateAccount").textContent = yesNo(user.privateAccount);
-    $("verified").textContent = yesNo(user.verified);
-
-    $("profileLink").href =
-      `https://www.tiktok.com/@${encodeURIComponent(user.uniqueId || username)}`;
+    $("privateAccount").textContent = yesNo(u.privateAccount);
+    $("verified").textContent = yesNo(u.verified);
+    $("profileLink").href = `https://www.tiktok.com/@${encodeURIComponent(u.uniqueId || username)}`;
 
     $("result").classList.remove("hidden");
     $("status").textContent = "";
-  } catch (error) {
+  } catch (err) {
     $("status").className = "status error";
-    $("status").textContent = error?.message || "Haku epäonnistui.";
+    $("status").textContent = err?.message || "Haku epäonnistui.";
   } finally {
     $("searchBtn").disabled = false;
   }

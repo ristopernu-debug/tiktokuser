@@ -1,24 +1,21 @@
-# TikTok Checker
+# TikTok Checker v2
 
-Open source -TikTok-profiilitarkistin ilman TikMatrixia tai maksullista profiili-API:a.
+Open source -versio ilman TikMatrixia tai Omar-Thing API:a.
 
-## Region-logiikka
+## Mikä muuttui?
 
-1. Käytetään TikTokin julkisen profiilidatan `region`-kenttää, jos se löytyy.
-2. Jos sitä ei ole, tarkistetaan enintään kolme julkista videota ja etsitään
-   TikTokin videometadatasta `locationCreated`.
-3. Jos kumpaakaan ei saada, näytetään N/A.
+Tavallinen server-side fetch sai TikTokin profiilitiedot, mutta ei käyttäjän videolistaa.
+Region-fallback tarvitsee videolistasta `locationCreated`-kentän.
 
-Maatietoa ei päätellä käyttäjänimestä, biosta tai language-kentästä.
+Tämä versio käyttää Vercelin serverless-funktiossa headless Chromiumia:
+1. avaa oikean TikTok-profiilisivun
+2. kuuntelee sivun omaa `/api/post/item_list/`-vastausta
+3. lukee julkisten videoiden `locationCreated`-maakoodit
+4. käyttää yleisintä maakoodia vain jos profiilin oma `region` puuttuu
 
-`locationCreated` kuvaa videon TikTok-metadatassa olevaa luontialuetta. Se ei ole
-käyttäjän GPS- tai reaaliaikainen sijainti.
+Maatietoa EI päätellä kielestä, biosta tai käyttäjänimestä.
 
-## Julkaisu
-
-Tämä versio tarvitsee Vercelin serverless-funktion.
-
-Repository:
+## Rakenne
 
 api/profile.js
 public/index.html
@@ -26,7 +23,21 @@ public/styles.css
 public/app.js
 package.json
 vercel.json
+README.md
+LICENSE
 
-Vercel:
-- Framework Preset: Other
-- API-avaimia ei tarvita.
+## Vercel
+
+GitHubiin commitoinnin jälkeen Vercel asentaa:
+- puppeteer-core
+- @sparticuz/chromium
+
+Framework Preset: Other.
+Environment Variables -asetuksia ei tarvita.
+
+Ensimmäinen haku voi olla tavallista hitaampi Chromiumin cold startin vuoksi.
+
+## Regionin merkitys
+
+TikTok-videoiden `locationCreated` ei ole GPS-sijainti eikä todista käyttäjän nykyistä
+fyysistä sijaintia. Se on TikTokin julkisessa videometadatassa oleva maakoodi.

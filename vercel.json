@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/profile.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/profile",

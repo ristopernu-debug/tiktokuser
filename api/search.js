@@ -4,10 +4,46 @@ import puppeteer from "puppeteer-core";
 function cleanQuery(value=""){
   return String(value).trim().replace(/[\u0000-\u001f]/g,"").slice(0,80);
 }
+function normalizeUser(x={}){
+  const u=x?.userInfo?.user||x?.user||x?.author||x;
+  const s=x?.userInfo?.stats||x?.stats||{};
+  const username=u?.uniqueId||u?.unique_id||u?.username;
+  if(!username) return null;
+  return {
+    username:String(username),
+    nickname:String(u?.nickname||u?.displayName||u?.display_name||username).slice(0,80),
+    avatar:u?.avatarThumb||u?.avatarMedium||u?.avatarLarger||u?.avatar_url||null,
+    followers:Number(s?.followerCount??s?.follower_count??u?.followerCount??NaN)
+  };
+}
+function collectUsers(value,out,depth=0){
+  if(depth>9||value==null) return;
+  if(Array.isArray(value)){for(const v of value) collectUsers(v,out,depth+1);return;}
+  if(typeof value!=="object") return;
+  const hit=normalizeUser(value); if(hit) out.push(hit);
+  for(const v of Object.values(value)) collectUsers(v,out,depth+1);
+}
+function uniqueRank(items,q){
+  const query=q.toLowerCase().replace(/^@/,"");
+  const seen=new Set();
+  return items.filter(x=>{
+    const k=x.username.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true;
+  }).map(x=>{
+    const u=x.username.toLowerCase(), n=x.nickname.toLowerCase();
+    let score=0;
+    if(u===query) score+=1000;
+    if(u.startsWith(query)) score+=500;
+    if(n===query) score+=450;
+    if(n.startsWith(query)) score+=250;
+    if(u.includes(query)) score+=180;
+    if(n.includes(query)) score+=120;
+    return {...x,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score-(Number(b.followers)||0)+(Number(a.followers)||0)).slice(0,8).map(({score,...x})=>x);
+}
 
 export default async function handler(req,res){
   res.setHeader("Content-Type","application/json; charset=utf-8");
-  res.setHeader("Cache-Control","public, s-maxage=300, stale-while-revalidate=600");
+  res.setHeader("Cache-Control","public, s-maxage=180, stale-while-revalidate=600");
   if(req.method!=="GET") return res.status(405).json({error:"Method not allowed"});
   const q=cleanQuery(req.query.q);
   if(q.length<2) return res.status(400).json({error:"Search query is too short"});
@@ -18,33 +54,29 @@ export default async function handler(req,res){
     const page=await browser.newPage();
     await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
     await page.setExtraHTTPHeaders({"Accept-Language":"en-US,en;q=0.9"});
-    const url=`https://www.tiktok.com/search/user?q=${encodeURIComponent(q)}`;
-    await page.goto(url,{waitUntil:"domcontentloaded",timeout:20000});
-    try{await page.waitForSelector('a[href^="/@"],a[href*="tiktok.com/@"]',{timeout:6000})}catch{}
-
-    const results=await page.evaluate(()=>{
-      const out=[];const seen=new Set();
-      const links=[...document.querySelectorAll('a[href^="/@"],a[href*="tiktok.com/@"]')];
-      for(const a of links){
-        let path="";try{path=new URL(a.href,location.origin).pathname}catch{continue}
-        const m=path.match(/^\/@([^/?#]+)/);if(!m)continue;const username=decodeURIComponent(m[1]);
-        if(!username||seen.has(username.toLowerCase())||/^(login|signup|explore)$/i.test(username))continue;
-        const box=a.closest('[data-e2e*="search-user"],li,div[class*="DivUserContainer"],div[class*="user"]')||a.parentElement||a;
-        const img=box.querySelector?.('img');
-        const text=(box.innerText||a.innerText||"").split("\n").map(s=>s.trim()).filter(Boolean);
-        let nickname=text.find(x=>x!==`@${username}`&&x.toLowerCase()!==username.toLowerCase()&&!/^\d/.test(x))||username;
-        const followerText=text.find(x=>/followers?|seuraaj|följare|abonn/i.test(x))||"";
-        let followers=null;const fm=followerText.replace(/,/g,"").match(/([\d.]+)\s*([KMB])?/i);if(fm){let n=Number(fm[1]);const mult={K:1e3,M:1e6,B:1e9}[String(fm[2]||"").toUpperCase()]||1;followers=Math.round(n*mult)}
-        out.push({username,nickname:nickname.slice(0,80),avatar:img?.src||null,followers});seen.add(username.toLowerCase());
-        if(out.length>=12)break;
-      }
-      return out;
+    const captured=[];
+    page.on("response",async response=>{
+      const url=response.url();
+      if(!/\/api\/search\/user|search\/user/i.test(url)) return;
+      try{const ct=response.headers()["content-type"]||"";if(ct.includes("json")){const json=await response.json();collectUsers(json,captured)}}catch{}
     });
+    await page.goto(`https://www.tiktok.com/search/user?q=${encodeURIComponent(q)}`,{waitUntil:"domcontentloaded",timeout:22000});
+    await new Promise(r=>setTimeout(r,2500));
+    try{await page.evaluate(()=>window.scrollTo(0,Math.min(document.body.scrollHeight,1200)));await new Promise(r=>setTimeout(r,1200))}catch{}
 
-    return res.status(200).json({results:results.slice(0,8)});
+    const pageData=await page.evaluate(()=>{
+      const users=[];
+      const push=(username,nickname,avatar)=>{if(username)users.push({username,nickname:nickname||username,avatar:avatar||null})};
+      for(const a of document.querySelectorAll('a[href^="/@"],a[href*="tiktok.com/@"]')){
+        try{const m=new URL(a.href,location.origin).pathname.match(/^\/@([^/?#]+)/);if(!m)continue;const username=decodeURIComponent(m[1]);const box=a.closest('[data-e2e*="search-user"],li,div[class*="User"],div[class*="user"]')||a.parentElement||a;const img=box.querySelector?.('img');const text=(box.innerText||a.innerText||"").split("\n").map(s=>s.trim()).filter(Boolean);const nickname=text.find(x=>x!==`@${username}`&&x.toLowerCase()!==username.toLowerCase())||username;push(username,nickname,img?.src)}catch{}
+      }
+      const walk=(v,d=0)=>{if(d>9||v==null)return;if(Array.isArray(v)){v.forEach(x=>walk(x,d+1));return}if(typeof v!=="object")return;const u=v?.userInfo?.user||v?.user||v?.author||v;const username=u?.uniqueId||u?.unique_id||u?.username;if(username)push(String(username),String(u?.nickname||u?.displayName||u?.display_name||username),u?.avatarThumb||u?.avatarMedium||u?.avatarLarger||u?.avatar_url||null);Object.values(v).forEach(x=>walk(x,d+1))};
+      for(const id of ["__UNIVERSAL_DATA_FOR_REHYDRATION__","SIGI_STATE"]){const el=document.getElementById(id);if(el?.textContent){try{walk(JSON.parse(el.textContent))}catch{}}}
+      return users;
+    });
+    const results=uniqueRank([...captured,...pageData],q);
+    return res.status(200).json({results});
   }catch(err){
     return res.status(500).json({error:"TikTok user search is temporarily unavailable"});
-  }finally{
-    if(browser){try{await browser.close()}catch{}}
-  }
+  }finally{if(browser){try{await browser.close()}catch{}}}
 }

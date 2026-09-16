@@ -1,15 +1,18 @@
-# TikTok Checker – integroitu postilista + videometadata
+# TikTok Checker – integrated browser-response test
 
-Tämä versio käyttää yhtä Vercel-funktiota ja yhtä Chromium-sessiota:
+Tämä versio hakee julkisen TikTok-profiilin Vercelissä ajettavalla Chromiumilla.
 
-1. Julkisen TikTok-profiilin hydration-JSON.
-2. Samassa TikTok-selainistunnossa kutsu `/api/post/item_list/` käyttäjän `secUid`:lla.
-3. Jos postilista palauttaa videon, tarkistetaan siitä `locationCreated` ja muut region/country-kentät.
-4. Ensimmäinen video avataan lisäksi TikTokin julkisena videosivuna ja tarkistetaan `webapp.video-detail`-JSON.
-5. Maa näytetään vain, jos TikTok palauttaa kaksikirjaimisen region-arvon. Kieltä, bioa tai käyttäjänimeä ei käytetä arvaukseen.
+Uusi ensisijainen videotietojen reitti:
+
+1. Response-listener asetetaan ennen profiilisivun avaamista.
+2. TikTok-profiili avataan oikeassa Chromium-selaimessa.
+3. Sovellus odottaa TikTokin oman frontendin tekemää `/api/post/item_list/`-verkkovastausta.
+4. Jos vastaus sisältää `itemList`-videot, ensimmäisestä videosta tarkistetaan `locationCreated` ja muut region/country-kentät.
+5. Jos videon URL saadaan, myös videon `__UNIVERSAL_DATA_FOR_REHYDRATION__` / `webapp.video-detail` tarkistetaan.
+6. Jos TikTokin sivu ei tee post-listapyyntöä, sovellus kokeilee vain diagnostisena fallbackina sivukontekstin fetch-kutsua.
+
+Sovellus ei arvaa maata kielestä, biosta tai käyttäjänimestä. Maa/region näytetään vain, jos TikTokin palauttamasta datasta löytyy kaksikirjaiminen region-arvo.
 
 ## Vercel
 
-Lataa projektin sisältö GitHub-repositorion juureen. Vercel käyttää `vercel.json`-asetuksia ja Node 20+:aa.
-
-Huom: TikTok voi muuttaa julkisen web-rajapintansa toimintaa tai estää automaattisia pyyntöjä. Diagnostiikka näyttää Post API:n HTTP-tilan ja virheen, jotta nähdään toimiiko selainistunnon sisäinen kutsu Vercelistä.
+Projektin juuressa ovat `package.json`, `vercel.json`, `api/` ja `public/`. Korvaa GitHub-repon nykyiset tiedostot tämän paketin vastaavilla tiedostoilla ja anna Vercelin deployata.

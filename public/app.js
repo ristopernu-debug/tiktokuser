@@ -77,6 +77,7 @@ $("form").addEventListener("submit", async (e) => {
     $("detailStatus").textContent = `HTTP ${d.httpStatus ?? "–"}`;
     $("profileRegion").textContent = d.rawRegion == null || d.rawRegion === "" ? "–" : String(d.rawRegion);
     $("postApi").textContent = d.postApiAttempted ? (d.postApiOk ? "Toimii" : "Ei palauttanut videoita") : "Ei yritetty";
+    $("postApiSource").textContent = d.postApiSource || "–";
     $("postApiHttp").textContent = d.postApiHttpStatus ? `HTTP ${d.postApiHttpStatus}` : "–";
     $("postCount").textContent = Number.isFinite(Number(d.postApiItemCount)) ? String(d.postApiItemCount) : "–";
     $("postError").textContent = d.postApiError || "–";

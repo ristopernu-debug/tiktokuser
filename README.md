@@ -6,8 +6,9 @@ Julkisten TikTok-profiilitietojen tarkistus Vercelissä.
 
 - Hakee julkisen TikTok-profiilin perustiedot.
 - Näyttää maan/regionin vain, jos TikTok palauttaa region-tiedon julkisessa metadatassa.
-- Jos profiilista ei löydy regionia, sovellus yrittää tarkistaa julkisen videometadatan `locationCreated`-kentän.
-- Tarvittaessa käyttäjä voi liittää saman tilin yhden julkisen TikTok-videon URL:n tarkistusta varten.
+- Jos profiilista ei löydy regionia, sovellus yrittää automaattisesti löytää saman tilin julkisen videon profiilisivulta ja tarkistaa videometadatan `locationCreated`-kentän.
+- Automaattinen videonhaku käyttää ensin TikTokin oman sivun post-listavastausta ja sen jälkeen profiilisivun julkisia videolinkkejä.
+- Jos automaattinen haku ei löydä videota tai regionia, käyttäjä voi liittää saman tilin yhden julkisen TikTok-videon URL:n varatarkistusta varten.
 - Ei päättele maata käyttäjänimestä, kielestä tai biosta.
 - Ei käytä TikMatrixia, Omar-Thing API:a tai API-avaimia.
 

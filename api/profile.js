@@ -233,19 +233,57 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2) Fallback: use a rendered profile video link if TikTok exposed one in the DOM.
+    // 2) Automatic fallback: discover one public video from the same profile.
+    // TikTok changes its profile rendering frequently, so try several public page surfaces:
+    // normal DOM links first, then the rendered HTML source. No external API or API key is used.
     let domVideoUrl = null;
+    let htmlVideoUrl = null;
+
     if (!postApi.firstVideoUrl) {
       try { await page.waitForSelector('a[href*="/video/"]', { timeout: 5000 }); } catch {}
-      domVideoUrl = await page.evaluate(() => {
+
+      domVideoUrl = await page.evaluate((expectedUsername) => {
         const links = [...document.querySelectorAll('a[href*="/video/"]')]
           .map((a) => a.href)
           .filter(Boolean);
-        return links.find((href) => /\/video\/\d+/.test(href)) || null;
-      });
+
+        const expected = String(expectedUsername || "").toLowerCase();
+        return links.find((href) => {
+          try {
+            const u = new URL(href);
+            const m = u.pathname.match(/^\/@([^/]+)\/video\/(\d+)/i);
+            return !!m && (!expected || m[1].toLowerCase() === expected);
+          } catch {
+            return false;
+          }
+        }) || null;
+      }, u.uniqueId || username);
+
+      domVideoUrl = cleanVideoUrl(domVideoUrl || "", u.uniqueId || username);
     }
 
-    const videoUrl = suppliedVideoUrl || postApi.firstVideoUrl || domVideoUrl;
+    if (!postApi.firstVideoUrl && !domVideoUrl) {
+      try {
+        const html = await page.content();
+        const escaped = String(u.uniqueId || username).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = new RegExp(`https?:\\/\\/(?:www\\.)?tiktok\\.com\\/@${escaped}\\/video\\/(\\d+)`, "i");
+        const direct = html.match(re);
+
+        if (direct) {
+          htmlVideoUrl = cleanVideoUrl(direct[0].replaceAll("&amp;", "&"), u.uniqueId || username);
+        } else {
+          // Some script payloads escape slashes as \/. Normalize a copy only for matching.
+          const normalized = html.replaceAll("\\/", "/");
+          const normalizedMatch = normalized.match(re);
+          if (normalizedMatch) {
+            htmlVideoUrl = cleanVideoUrl(normalizedMatch[0].replaceAll("&amp;", "&"), u.uniqueId || username);
+          }
+        }
+      } catch {}
+    }
+
+    const automaticVideoUrl = postApi.firstVideoUrl || domVideoUrl || htmlVideoUrl;
+    const videoUrl = suppliedVideoUrl || automaticVideoUrl;
     let video = {
       url: videoUrl,
       httpStatus: null,
@@ -342,6 +380,14 @@ export default async function handler(req, res) {
         postApiItemCount: postApi.itemCount,
         postApiError: postApi.error,
         firstVideoId: postApi.firstVideoId,
+        automaticVideoUrl,
+        automaticVideoSource: postApi.firstVideoUrl
+          ? "post-list"
+          : domVideoUrl
+            ? "profile-dom"
+            : htmlVideoUrl
+              ? "profile-html"
+              : null,
         videoUrl: video.url,
         suppliedVideoUrlUsed: !!suppliedVideoUrl,
         videoHttpStatus: video.httpStatus,

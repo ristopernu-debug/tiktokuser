@@ -117,7 +117,7 @@ $("form").addEventListener("submit", async (e) => {
   $("username").value = username;
   $("result").classList.add("hidden");
   $("status").className = "status";
-  $("status").textContent = "Haetaan TikTokin julkisia profiilitietoja…";
+  $("status").textContent = "Haetaan profiilitiedot ja tarvittaessa maatieto automaattisesti julkisesta videosta…";
   $("searchBtn").disabled = true;
   $("videoStatus").textContent = "";
   $("videoUrl").value = "";

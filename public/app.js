@@ -61,7 +61,10 @@ $("form").addEventListener("submit", async (e) => {
   $("searchBtn").disabled = true;
 
   try {
-    const res = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
+    const videoUrl = $("videoUrl").value.trim();
+    const qs = new URLSearchParams({ username });
+    if (videoUrl) qs.set("videoUrl", videoUrl);
+    const res = await fetch(`/api/profile?${qs.toString()}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Haku epäonnistui.");
 

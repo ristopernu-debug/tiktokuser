@@ -1,18 +1,12 @@
-# TikTok Checker – integrated browser-response test
+# TikTok Checker – direct video URL test
 
-Tämä versio hakee julkisen TikTok-profiilin Vercelissä ajettavalla Chromiumilla.
+Vercel-versio julkisten TikTok-profiilitietojen tarkistukseen.
 
-Uusi ensisijainen videotietojen reitti:
+Uutta tässä testissä:
+- käyttäjä voi antaa valinnaisesti yhden saman julkisen TikTok-tilin videon URL:n
+- backend avaa videon suoraan Chromiumissa
+- videon `__UNIVERSAL_DATA_FOR_REHYDRATION__` parsitaan
+- näytetään `locationCreated` ja muut region/country-nimiset kentät, jos TikTok palauttaa niitä
+- maata ei päätellä kielestä, biosta tai käyttäjänimestä
 
-1. Response-listener asetetaan ennen profiilisivun avaamista.
-2. TikTok-profiili avataan oikeassa Chromium-selaimessa.
-3. Sovellus odottaa TikTokin oman frontendin tekemää `/api/post/item_list/`-verkkovastausta.
-4. Jos vastaus sisältää `itemList`-videot, ensimmäisestä videosta tarkistetaan `locationCreated` ja muut region/country-kentät.
-5. Jos videon URL saadaan, myös videon `__UNIVERSAL_DATA_FOR_REHYDRATION__` / `webapp.video-detail` tarkistetaan.
-6. Jos TikTokin sivu ei tee post-listapyyntöä, sovellus kokeilee vain diagnostisena fallbackina sivukontekstin fetch-kutsua.
-
-Sovellus ei arvaa maata kielestä, biosta tai käyttäjänimestä. Maa/region näytetään vain, jos TikTokin palauttamasta datasta löytyy kaksikirjaiminen region-arvo.
-
-## Vercel
-
-Projektin juuressa ovat `package.json`, `vercel.json`, `api/` ja `public/`. Korvaa GitHub-repon nykyiset tiedostot tämän paketin vastaavilla tiedostoilla ja anna Vercelin deployata.
+Jos videolinkkiä ei anneta, sovellus yrittää edelleen löytää videon automaattisesti.

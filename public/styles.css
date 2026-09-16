@@ -41,3 +41,10 @@ summary{cursor:pointer;font-weight:800}
   .search button{grid-column:1/-1;width:100%}
   .stats{grid-template-columns:repeat(2,1fr);gap:16px 8px}
 }
+
+
+.videoTest { margin: 10px 0 0; }
+.videoTest label { display:block; margin:0 0 6px; font-size:12px; font-weight:700; color:#657080; text-transform:uppercase; letter-spacing:.03em; }
+.videoTest label small { font-weight:400; text-transform:none; letter-spacing:0; }
+.videoTest input { width:100%; box-sizing:border-box; border:1px solid #d9dee5; border-radius:10px; padding:12px 14px; font:inherit; background:#fff; color:#111827; outline:none; }
+.videoTest input:focus { border-color:#9aa5b1; box-shadow:0 0 0 3px rgba(17,24,39,.05); }

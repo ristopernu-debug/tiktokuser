@@ -9,6 +9,20 @@ function twoLetter(v) {
   return typeof v === "string" && /^[A-Za-z]{2}$/.test(v) ? v.toUpperCase() : null;
 }
 
+function cleanVideoUrl(value = "", username = "") {
+  if (!value) return null;
+  try {
+    const u = new URL(String(value).trim());
+    if (!/(^|\.)tiktok\.com$/i.test(u.hostname)) return null;
+    const m = u.pathname.match(/^\/@([^/]+)\/video\/(\d+)/i);
+    if (!m) return null;
+    if (username && m[1].toLowerCase() !== username.toLowerCase()) return null;
+    return `https://www.tiktok.com/@${encodeURIComponent(m[1])}/video/${m[2]}`;
+  } catch {
+    return null;
+  }
+}
+
 function scanRegionFields(obj, maxHits = 30) {
   const hits = [];
   const seen = new WeakSet();
@@ -40,6 +54,11 @@ export default async function handler(req, res) {
 
   const username = cleanUsername(req.query.username);
   if (!username) return res.status(400).json({ error: "Virheellinen TikTok-käyttäjänimi." });
+  const suppliedVideoRaw = String(req.query.videoUrl || "").trim();
+  const suppliedVideoUrl = cleanVideoUrl(suppliedVideoRaw, username);
+  if (suppliedVideoRaw && !suppliedVideoUrl) {
+    return res.status(400).json({ error: "Videolinkin pitää olla saman käyttäjän julkinen TikTok-video." });
+  }
 
   let browser;
 
@@ -226,7 +245,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const videoUrl = postApi.firstVideoUrl || domVideoUrl;
+    const videoUrl = suppliedVideoUrl || postApi.firstVideoUrl || domVideoUrl;
     let video = {
       url: videoUrl,
       httpStatus: null,
@@ -324,6 +343,7 @@ export default async function handler(req, res) {
         postApiError: postApi.error,
         firstVideoId: postApi.firstVideoId,
         videoUrl: video.url,
+        suppliedVideoUrlUsed: !!suppliedVideoUrl,
         videoHttpStatus: video.httpStatus,
         videoHydrationFound: video.hydrationFound,
         videoDetailFound: video.videoDetailFound,

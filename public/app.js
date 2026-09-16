@@ -75,8 +75,12 @@ $("form").addEventListener("submit", async (e) => {
     $("language").textContent = prettyLanguage(u.language);
     $("regionSource").textContent = data.regionSource || "Ei saatavilla";
     $("detailStatus").textContent = `HTTP ${d.httpStatus ?? "–"}`;
-    $("videoLinks").textContent = yesNoDiagnostic(d.regionKeyPresent);
-    $("checkedVideos").textContent = d.rawRegion == null || d.rawRegion === "" ? "–" : String(d.rawRegion);
+    $("profileRegion").textContent = d.rawRegion == null || d.rawRegion === "" ? "–" : String(d.rawRegion);
+    $("videoLinks").textContent = d.videoUrl ? "Kyllä" : "Ei";
+    $("videoHttp").textContent = d.videoHttpStatus ? `HTTP ${d.videoHttpStatus}` : "–";
+    $("videoJson").textContent = yesNoDiagnostic(d.videoDetailFound);
+    $("checkedVideos").textContent = d.locationCreated == null || d.locationCreated === "" ? "–" : String(d.locationCreated);
+    $("regionFields").textContent = Array.isArray(d.regionLikeFields) && d.regionLikeFields.length ? d.regionLikeFields.map(x => `${x.path}: ${x.value}`).join(" | ") : "–";
 
     const avatar = $("avatar");
     const fallback = $("avatarFallback");

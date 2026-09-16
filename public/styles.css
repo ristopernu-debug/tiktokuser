@@ -82,3 +82,7 @@ details{padding-top:15px}
  .stats{grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 0}
  .stats div{padding:11px 6px}
 }
+
+/* V8: hero width matches the full desktop content grid */
+.heroBanner{width:min(1116px,100%)}
+@media(max-width:1120px){.heroBanner{width:100%}}

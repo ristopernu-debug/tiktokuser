@@ -1,6 +1,6 @@
 {
-  "name": "tiktok-clean-checker-region-debug",
-  "version": "2.4.0",
+  "name": "tiktok-clean-checker-final",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "engines": {

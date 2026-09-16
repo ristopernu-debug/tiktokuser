@@ -4,19 +4,17 @@ Julkisten TikTok-profiilitietojen tarkistus Vercelissä.
 
 ## Toiminta
 
-- Hakee julkisen profiilin perustiedot TikTokin profiilisivulta.
-- Näyttää `region`-arvon, jos TikTok palauttaa sen profiilidatassa.
-- Yrittää automaattisesti löytää yhden julkisen videon TikTokin oman sivun verkkoliikenteestä/DOM:sta ja tarkistaa videometadatan `locationCreated`-kentän.
-- Jos automaattinen videohaku ei onnistu, käyttöliittymä näyttää siistin varavaihtoehdon: käyttäjä voi liittää yhden saman tilin julkisen TikTok-videon URL:n. Tällöin `locationCreated` tarkistetaan suoraan videon julkisesta metadatasta.
+- Hakee julkisen TikTok-profiilin perustiedot.
+- Näyttää maan/regionin vain, jos TikTok palauttaa region-tiedon julkisessa metadatassa.
+- Jos profiilista ei löydy regionia, sovellus yrittää tarkistaa julkisen videometadatan `locationCreated`-kentän.
+- Tarvittaessa käyttäjä voi liittää saman tilin yhden julkisen TikTok-videon URL:n tarkistusta varten.
 - Ei päättele maata käyttäjänimestä, kielestä tai biosta.
+- Ei käytä TikMatrixia, Omar-Thing API:a tai API-avaimia.
 
-## Vercel
+## Käyttöönotto
 
-1. Vie tiedostot GitHub-repositorion juureen.
-2. Yhdistä repository Verceliin.
-3. Vercel käyttää `vercel.json`-asetuksia ja asentaa `package.json`-riippuvuudet automaattisesti.
-4. Uusi commit käynnistää uuden deployn.
+Vie tämän paketin tiedostot GitHub-repositorion juureen ja korvaa vanhat versiot. Verceliin yhdistetty repository deployataan uuden commitin jälkeen automaattisesti.
 
-## Huomio region-tiedosta
+## Region-tiedon merkitys
 
-`locationCreated` on TikTokin videometadatassa palauttama kenttä. Sovellus näyttää sen TikTokin julkisena metadata-arvona eikä väitä sen olevan käyttäjän nykyinen fyysinen sijainti.
+TikTokin region- tai `locationCreated`-metadata ei tarkoita käyttäjän nykyistä fyysistä sijaintia.

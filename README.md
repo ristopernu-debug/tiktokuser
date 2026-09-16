@@ -67,3 +67,8 @@ näissä testeissä.
 Testidataa tai testikuvakaappauksia ei sisälly julkaistavaan sivuun.
 V9:n varsinaista live-TikTok-hakua ei testattu. Profiilihakulogiikka, palvelimen
 rajapintatiedostot, kuva ja riippuvuudet ovat tavutasolla samat kuin V8:ssa.
+
+
+## V10
+- Huomaamaton onnistuneiden tarkistusten laskuri footerin alla.
+- Laskuri tallennetaan vain selaimen localStorageen; palvelin ei tallenna hakuja tai käyttäjätietoja laskuria varten.

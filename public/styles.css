@@ -169,6 +169,12 @@ summary::marker { color: #657c6e; }
 .creatorText small { font-size: .75rem; color: #d5e6dd; }
 .creatorArrow { margin-left: auto; font-size: 1.5rem; }
 
+.checkCounter {
+  margin: 8px 0 0; text-align: center; color: #8a958f;
+  font-size: .6875rem; line-height: 1.45; font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+}
+
 /* Compatibility with the existing (inactive) match-list markup. */
 .matches { margin-bottom: 18px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: #fff; }
 .matchesTitle { padding: 13px 16px; color: var(--muted); font-size: .75rem; font-weight: 700; }

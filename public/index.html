@@ -9,30 +9,29 @@
 </head>
 <body>
   <div class="pageShell">
-    <div class="heroBanner" aria-hidden="true">
+    <div class="pageTop">
+      <label class="languagePicker" aria-label="Language">
+        <select id="uiLanguage">
+          <option value="fi">FI</option>
+          <option value="en">EN</option>
+          <option value="sv">SV</option>
+          <option value="de">DE</option>
+          <option value="fr">FR</option>
+          <option value="es">ES</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="heroBanner">
       <img src="/tiktok-hero.jpg" alt="">
+      <div class="heroTitle" data-i18n="heroTitle">-tarkistin</div>
     </div>
 
     <div class="contentGrid">
       <aside class="promoSlot promoSide promoLeft" aria-label="Mainospaikka"><span data-i18n="ad">Mainos</span></aside>
 
       <main class="wrap">
-        <header class="topbar">
-          <div>
-            <h1 data-i18n="title">TikTok-tarkistin</h1>
-            <p data-i18n="subtitle">Julkisten profiilitietojen tarkistus.</p>
-          </div>
-          <label class="languagePicker" aria-label="Language">
-            <select id="uiLanguage">
-              <option value="fi">FI</option>
-              <option value="en">EN</option>
-              <option value="sv">SV</option>
-              <option value="de">DE</option>
-              <option value="fr">FR</option>
-              <option value="es">ES</option>
-            </select>
-          </label>
-        </header>
+        <p class="introText" data-i18n="subtitle">Julkisten profiilitietojen tarkistus.</p>
 
         <form id="form" class="search">
           <input id="username" data-i18n-placeholder="searchPlaceholder" placeholder="@käyttäjänimi tai nimi" autocomplete="off" spellcheck="false" required>

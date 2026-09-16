@@ -1,21 +1,21 @@
-# TikTok Checker – final
+# TikTok Checker
 
-Julkisten TikTok-profiilitietojen tarkistus Vercelissä.
+Minimalistinen Vercel-sovellus julkisten TikTok-profiilitietojen tarkistukseen.
 
-## Toiminta
+## Ominaisuudet
 
-- Hakee julkisen TikTok-profiilin perustiedot.
-- Näyttää maan/regionin vain, jos TikTok palauttaa region-tiedon julkisessa metadatassa.
-- Jos profiilista ei löydy regionia, sovellus yrittää automaattisesti löytää saman tilin julkisen videon profiilisivulta ja tarkistaa videometadatan `locationCreated`-kentän.
-- Automaattinen videonhaku käyttää ensin TikTokin oman sivun post-listavastausta ja profiilisivun julkisia videolinkkejä. Jos niitä ei saada, sovellus kokeilee TikTokin virallista Creator Profile Embed -näkymää, joka voi sisältää viimeisimpiä julkisia videoita.
-- Jos automaattinen haku ei löydä videota tai regionia, käyttäjä voi liittää saman tilin yhden julkisen TikTok-videon URL:n varatarkistusta varten.
-- Ei päättele maata käyttäjänimestä, kielestä tai biosta.
-- Ei käytä TikMatrixia, Omar-Thing API:a tai API-avaimia.
+- Tarkka haku käyttäjätunnuksella (`@username` tai `username`).
+- Nimen haku: jos syöte ei ratkea suoraan käyttäjätunnukseksi, sovellus näyttää lähimpiä julkisia käyttäjäosumia valittavaksi.
+- Julkiset profiilitiedot, tilastot ja TikTokin julkisesta metadatasta saatava region-tieto.
+- Jos profiilissa ei ole regionia, sovellus yrittää löytää julkisen videon ja lukea `locationCreated`-tiedon automaattisesti.
+- Manuaalinen videolinkki jää varavaihtoehdoksi vain silloin, kun automaattinen region-haku ei onnistu.
+- Käyttöliittymän kielivalikko: FI, EN, SV, DE, FR ja ES. Valinta tallennetaan selaimeen; ensimmäisellä käynnillä käytetään selaimen kieltä, jos se on tuettu.
+- Valmiit responsiiviset mainospaikat: yläbanneri, kaksi desktop-sivupaikkaa ja alabanneri.
 
 ## Käyttöönotto
 
-Vie tämän paketin tiedostot GitHub-repositorion juureen ja korvaa vanhat versiot. Verceliin yhdistetty repository deployataan uuden commitin jälkeen automaattisesti.
+Vie paketin sisältö GitHub-repositorion juureen ja korvaa vanha versio. Jos repository on yhdistetty Verceliin, uusi commit deployataan automaattisesti.
 
-## Region-tiedon merkitys
+## Huomio
 
-TikTokin region- tai `locationCreated`-metadata ei tarkoita käyttäjän nykyistä fyysistä sijaintia.
+TikTokin julkisten hakusivujen HTML voi muuttua. Käyttäjätunnushaku on siksi vakaampi kuin nimellä tehtävä osumahaku.

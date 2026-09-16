@@ -8,82 +8,104 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="wrap">
-    <header>
-      <h1>TikTok Checker</h1>
-      <p>Julkisten profiilitietojen tarkistus.</p>
-    </header>
+  <div class="pageShell">
+    <div class="ad-slot ad-top" aria-label="Advertisement"><span data-i18n="ad">Mainos</span></div>
 
-    <form id="form" class="search">
-      <span>@</span>
-      <input id="username" placeholder="käyttäjänimi" autocomplete="off" spellcheck="false" required>
-      <button id="searchBtn" type="submit">Hae</button>
-    </form>
+    <div class="contentGrid">
+      <aside class="ad-slot ad-side ad-left" aria-label="Advertisement"><span data-i18n="ad">Mainos</span></aside>
 
-    <p id="status" class="status" aria-live="polite"></p>
+      <main class="wrap">
+        <header class="topbar">
+          <div>
+            <h1>TikTok Checker</h1>
+            <p data-i18n="subtitle">Julkisten profiilitietojen tarkistus.</p>
+          </div>
+          <label class="languagePicker" aria-label="Language">
+            <select id="uiLanguage">
+              <option value="fi">FI</option>
+              <option value="en">EN</option>
+              <option value="sv">SV</option>
+              <option value="de">DE</option>
+              <option value="fr">FR</option>
+              <option value="es">ES</option>
+            </select>
+          </label>
+        </header>
 
-    <section id="result" class="card hidden">
-      <div class="profile">
-        <div id="avatarFallback" class="avatar fallback">?</div>
-        <img id="avatar" class="avatar hidden" alt="">
-        <div>
-          <div id="nickname" class="nickname"></div>
-          <div id="handle" class="handle"></div>
-        </div>
-      </div>
-
-      <div class="mainInfo">
-        <div>
-          <span>Maa / region</span>
-          <strong id="region">N/A</strong>
-        </div>
-        <div>
-          <span>Kieli</span>
-          <strong id="language">N/A</strong>
-        </div>
-      </div>
-
-      <div id="regionMeta" class="regionMeta hidden">
-        <span>Lähde</span>
-        <b id="regionSource">–</b>
-        <p>Tieto tulee TikTokin julkisesta metadatasta. Se ei tarkoita käyttäjän nykyistä sijaintia.</p>
-      </div>
-
-      <div id="videoFallback" class="videoFallback hidden">
-        <strong>Maa ei löytynyt automaattisesti</strong>
-        <p>Profiilista tai automaattisesti löydetystä julkisesta videosta ei löytynyt region-tietoa. Voit vielä tarkistaa sen saman käyttäjän videolinkillä.</p>
-        <form id="videoForm" class="videoSearch">
-          <input id="videoUrl" type="url" placeholder="https://www.tiktok.com/@kayttaja/video/123..." autocomplete="off" spellcheck="false" required>
-          <button id="videoBtn" type="submit">Tarkista videosta</button>
+        <form id="form" class="search">
+          <input id="username" data-i18n-placeholder="searchPlaceholder" placeholder="@käyttäjänimi tai nimi" autocomplete="off" spellcheck="false" required>
+          <button id="searchBtn" type="submit" data-i18n="search">Hae</button>
         </form>
-        <p id="videoStatus" class="videoStatus" aria-live="polite"></p>
-      </div>
 
-      <div id="bioWrap" class="bioWrap hidden">
-        <span>Bio</span>
-        <p id="bio"></p>
-      </div>
+        <p id="status" class="status" aria-live="polite"></p>
 
-      <div class="stats">
-        <div><strong id="followers">–</strong><span>Seuraajat</span></div>
-        <div><strong id="following">–</strong><span>Seuratut</span></div>
-        <div><strong id="likes">–</strong><span>Tykkäykset</span></div>
-        <div><strong id="videos">–</strong><span>Videot</span></div>
-      </div>
+        <section id="matches" class="matches hidden" aria-live="polite">
+          <div class="matchesTitle" data-i18n="matchesTitle">Lähimmät osumat</div>
+          <div id="matchList"></div>
+        </section>
 
-      <details>
-        <summary>Lisätiedot</summary>
-        <div class="details">
-          <div><span>User ID</span><code id="userId">–</code></div>
-          <div><span>Tili luotu</span><b id="created">–</b></div>
-          <div><span>Yksityinen tili</span><b id="privateAccount">–</b></div>
-          <div><span>Vahvistettu</span><b id="verified">–</b></div>
-        </div>
-      </details>
+        <section id="result" class="card hidden">
+          <div class="profile">
+            <div id="avatarFallback" class="avatar fallback">?</div>
+            <img id="avatar" class="avatar hidden" alt="">
+            <div>
+              <div id="nickname" class="nickname"></div>
+              <div id="handle" class="handle"></div>
+            </div>
+          </div>
 
-      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
-    </section>
-  </main>
+          <div class="mainInfo">
+            <div>
+              <span data-i18n="region">Maa / region</span>
+              <strong id="region">N/A</strong>
+            </div>
+            <div>
+              <span data-i18n="language">Kieli</span>
+              <strong id="language">N/A</strong>
+            </div>
+          </div>
+
+          <div id="videoFallback" class="videoFallback hidden">
+            <form id="videoForm" class="videoSearch">
+              <input id="videoUrl" type="url" data-i18n-placeholder="videoPlaceholder" placeholder="TikTok-videon linkki" autocomplete="off" spellcheck="false" required>
+              <button id="videoBtn" type="submit" data-i18n="checkVideo">Tarkista video</button>
+            </form>
+            <p id="videoStatus" class="videoStatus" aria-live="polite"></p>
+          </div>
+
+          <div id="bioWrap" class="bioWrap hidden">
+            <span>Bio</span>
+            <p id="bio"></p>
+          </div>
+
+          <div class="stats">
+            <div><strong id="followers">–</strong><span data-i18n="followers">Seuraajat</span></div>
+            <div><strong id="following">–</strong><span data-i18n="following">Seuratut</span></div>
+            <div><strong id="likes">–</strong><span data-i18n="likes">Tykkäykset</span></div>
+            <div><strong id="videos">–</strong><span data-i18n="videos">Videot</span></div>
+          </div>
+
+          <details>
+            <summary data-i18n="details">Lisätiedot</summary>
+            <div class="details">
+              <div><span>User ID</span><code id="userId">–</code></div>
+              <div><span data-i18n="created">Tili luotu</span><b id="created">–</b></div>
+              <div><span data-i18n="private">Yksityinen tili</span><b id="privateAccount">–</b></div>
+              <div><span data-i18n="verified">Vahvistettu</span><b id="verified">–</b></div>
+              <div id="regionSourceRow" class="hidden"><span data-i18n="source">Lähde</span><b id="regionSource">–</b></div>
+            </div>
+          </details>
+
+          <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer" data-i18n="openProfile">Avaa TikTok-profiili</a>
+        </section>
+      </main>
+
+      <aside class="ad-slot ad-side ad-right" aria-label="Advertisement"><span data-i18n="ad">Mainos</span></aside>
+    </div>
+
+    <div class="ad-slot ad-bottom" aria-label="Advertisement"><span data-i18n="ad">Mainos</span></div>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

@@ -1,12 +1,15 @@
-# TikTok Checker – video metadata test
+# TikTok Checker – integroitu postilista + videometadata
 
-Testiversio, joka hakee yhden julkisen TikTok-profiilin ja yrittää löytää profiilisivulta yhden julkisen videolinkin. Jos linkki löytyy, se avaa videon julkisen sivun ja lukee `__UNIVERSAL_DATA_FOR_REHYDRATION__` → `webapp.video-detail` → `itemInfo.itemStruct` -datan.
+Tämä versio käyttää yhtä Vercel-funktiota ja yhtä Chromium-sessiota:
 
-Region-järjestys:
-1. profiilin suora `user.region`
-2. videometadatan suora `locationCreated`
-3. N/A
+1. Julkisen TikTok-profiilin hydration-JSON.
+2. Samassa TikTok-selainistunnossa kutsu `/api/post/item_list/` käyttäjän `secUid`:lla.
+3. Jos postilista palauttaa videon, tarkistetaan siitä `locationCreated` ja muut region/country-kentät.
+4. Ensimmäinen video avataan lisäksi TikTokin julkisena videosivuna ja tarkistetaan `webapp.video-detail`-JSON.
+5. Maa näytetään vain, jos TikTok palauttaa kaksikirjaimisen region-arvon. Kieltä, bioa tai käyttäjänimeä ei käytetä arvaukseen.
 
-Lisätiedoissa näytetään diagnostiikkana videon HTTP-vastaus, löytyikö video-JSON, `locationCreated` sekä muut video-JSONista löytyvät region/country/locationCreated-nimiset yksinkertaiset kentät. Maata ei päätellä kielestä, biosta tai käyttäjänimestä.
+## Vercel
 
-Ei API-avainta eikä kolmannen osapuolen profiilipalvelua.
+Lataa projektin sisältö GitHub-repositorion juureen. Vercel käyttää `vercel.json`-asetuksia ja Node 20+:aa.
+
+Huom: TikTok voi muuttaa julkisen web-rajapintansa toimintaa tai estää automaattisia pyyntöjä. Diagnostiikka näyttää Post API:n HTTP-tilan ja virheen, jotta nähdään toimiiko selainistunnon sisäinen kutsu Vercelistä.

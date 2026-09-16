@@ -76,9 +76,14 @@ $("form").addEventListener("submit", async (e) => {
     $("regionSource").textContent = data.regionSource || "Ei saatavilla";
     $("detailStatus").textContent = `HTTP ${d.httpStatus ?? "–"}`;
     $("profileRegion").textContent = d.rawRegion == null || d.rawRegion === "" ? "–" : String(d.rawRegion);
+    $("postApi").textContent = d.postApiAttempted ? (d.postApiOk ? "Toimii" : "Ei palauttanut videoita") : "Ei yritetty";
+    $("postApiHttp").textContent = d.postApiHttpStatus ? `HTTP ${d.postApiHttpStatus}` : "–";
+    $("postCount").textContent = Number.isFinite(Number(d.postApiItemCount)) ? String(d.postApiItemCount) : "–";
+    $("postError").textContent = d.postApiError || "–";
     $("videoLinks").textContent = d.videoUrl ? "Kyllä" : "Ei";
     $("videoHttp").textContent = d.videoHttpStatus ? `HTTP ${d.videoHttpStatus}` : "–";
     $("videoJson").textContent = yesNoDiagnostic(d.videoDetailFound);
+    $("postLocation").textContent = d.postLocationCreated == null || d.postLocationCreated === "" ? "–" : String(d.postLocationCreated);
     $("checkedVideos").textContent = d.locationCreated == null || d.locationCreated === "" ? "–" : String(d.locationCreated);
     $("regionFields").textContent = Array.isArray(d.regionLikeFields) && d.regionLikeFields.length ? d.regionLikeFields.map(x => `${x.path}: ${x.value}`).join(" | ") : "–";
 

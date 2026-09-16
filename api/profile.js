@@ -23,6 +23,80 @@ function cleanVideoUrl(value = "", username = "") {
   }
 }
 
+async function discoverVideoFromCreatorEmbed(browser, username) {
+  const result = { url: null, error: null };
+  let embedPage;
+
+  try {
+    const profileUrl = `https://www.tiktok.com/@${encodeURIComponent(username)}`;
+    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
+    const r = await fetch(oembedUrl, {
+      headers: {
+        accept: "application/json",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (!r.ok) {
+      result.error = `TikTok oEmbed palautti HTTP ${r.status}.`;
+      return result;
+    }
+
+    const data = await r.json();
+    if (!data?.html) {
+      result.error = "TikTok oEmbed ei palauttanut creator-embed-koodia.";
+      return result;
+    }
+
+    embedPage = await browser.newPage();
+    await embedPage.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    );
+    await embedPage.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
+
+    await embedPage.setContent(
+      `<!doctype html><html><head><meta charset="utf-8"></head><body>${data.html}</body></html>`,
+      { waitUntil: "domcontentloaded", timeout: 15000 }
+    );
+
+    // Creator Profile Embed is an official TikTok surface and normally renders a selection
+    // of recent public videos. The content may live in a child frame, so inspect all frames.
+    for (let round = 0; round < 8 && !result.url; round += 1) {
+      await new Promise((resolve) => setTimeout(resolve, round === 0 ? 2200 : 1000));
+
+      for (const frame of embedPage.frames()) {
+        try {
+          const links = await frame.evaluate(() => {
+            const all = [...document.querySelectorAll('a[href]')].map((a) => a.href).filter(Boolean);
+            return all.filter((href) => /tiktok\.com\/@[^/]+\/video\/\d+/i.test(href)).slice(0, 20);
+          });
+
+          for (const href of links) {
+            const cleaned = cleanVideoUrl(href, username);
+            if (cleaned) {
+              result.url = cleaned;
+              break;
+            }
+          }
+        } catch {
+          // A frame may disappear while the embed is re-rendering; keep checking others.
+        }
+        if (result.url) break;
+      }
+    }
+
+    if (!result.url) result.error = "Creator Profile Embed ei paljastanut videolinkkiä odotusajan kuluessa.";
+    return result;
+  } catch (err) {
+    result.error = String(err?.message || err);
+    return result;
+  } finally {
+    if (embedPage) {
+      try { await embedPage.close(); } catch {}
+    }
+  }
+}
+
 function scanRegionFields(obj, maxHits = 30) {
   const hits = [];
   const seen = new WeakSet();
@@ -282,7 +356,17 @@ export default async function handler(req, res) {
       } catch {}
     }
 
-    const automaticVideoUrl = postApi.firstVideoUrl || domVideoUrl || htmlVideoUrl;
+    // 2b) Official Creator Profile Embed fallback. TikTok documents that the creator embed
+    // can contain up to ten recent public videos. This route needs no API key.
+    let embedVideoUrl = null;
+    let embedVideoError = null;
+    if (!postApi.firstVideoUrl && !domVideoUrl && !htmlVideoUrl) {
+      const embedDiscovery = await discoverVideoFromCreatorEmbed(browser, u.uniqueId || username);
+      embedVideoUrl = embedDiscovery.url;
+      embedVideoError = embedDiscovery.error;
+    }
+
+    const automaticVideoUrl = postApi.firstVideoUrl || domVideoUrl || htmlVideoUrl || embedVideoUrl;
     const videoUrl = suppliedVideoUrl || automaticVideoUrl;
     let video = {
       url: videoUrl,
@@ -387,7 +471,10 @@ export default async function handler(req, res) {
             ? "profile-dom"
             : htmlVideoUrl
               ? "profile-html"
-              : null,
+              : embedVideoUrl
+                ? "creator-embed"
+                : null,
+        embedVideoError,
         videoUrl: video.url,
         suppliedVideoUrlUsed: !!suppliedVideoUrl,
         videoHttpStatus: video.httpStatus,

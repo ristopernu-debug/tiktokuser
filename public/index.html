@@ -20,11 +20,6 @@
       <button id="searchBtn" type="submit">Hae</button>
     </form>
 
-    <div class="videoTest">
-      <label for="videoUrl">TikTok-videon URL <small>(valinnainen testi)</small></label>
-      <input id="videoUrl" type="url" placeholder="https://www.tiktok.com/@kayttaja/video/123..." autocomplete="off" spellcheck="false">
-    </div>
-
     <p id="status" class="status" aria-live="polite"></p>
 
     <section id="result" class="card hidden">
@@ -48,6 +43,22 @@
         </div>
       </div>
 
+      <div id="regionMeta" class="regionMeta hidden">
+        <span>Lähde</span>
+        <b id="regionSource">–</b>
+        <p>Tieto tulee TikTokin julkisesta metadatasta. Se ei tarkoita käyttäjän nykyistä sijaintia.</p>
+      </div>
+
+      <div id="videoFallback" class="videoFallback hidden">
+        <strong>Maa ei löytynyt automaattisesti</strong>
+        <p>Voit tarkistaa region-tiedon yhdestä saman käyttäjän julkisesta TikTok-videosta.</p>
+        <form id="videoForm" class="videoSearch">
+          <input id="videoUrl" type="url" placeholder="https://www.tiktok.com/@kayttaja/video/123..." autocomplete="off" spellcheck="false" required>
+          <button id="videoBtn" type="submit">Tarkista videosta</button>
+        </form>
+        <p id="videoStatus" class="videoStatus" aria-live="polite"></p>
+      </div>
+
       <div id="bioWrap" class="bioWrap hidden">
         <span>Bio</span>
         <p id="bio"></p>
@@ -64,30 +75,13 @@
         <summary>Lisätiedot</summary>
         <div class="details">
           <div><span>User ID</span><code id="userId">–</code></div>
-          <div><span>SecUID</span><code id="secUid">–</code></div>
           <div><span>Tili luotu</span><b id="created">–</b></div>
           <div><span>Yksityinen tili</span><b id="privateAccount">–</b></div>
           <div><span>Vahvistettu</span><b id="verified">–</b></div>
-          <div><span>Region-lähde</span><b id="regionSource">–</b></div>
-          <div><span>HTTP-vastaus</span><b id="detailStatus">–</b></div>
-          <div><span>Profiilin region</span><b id="profileRegion">–</b></div>
-          <div><span>Post API</span><b id="postApi">–</b></div>
-          <div><span>Post API -lähde</span><b id="postApiSource">–</b></div>
-          <div><span>Post API HTTP</span><b id="postApiHttp">–</b></div>
-          <div><span>Posteja löytyi</span><b id="postCount">–</b></div>
-          <div><span>Post API virhe</span><b id="postError">–</b></div>
-          <div><span>Julkinen video löytyi</span><b id="videoLinks">–</b></div>
-          <div><span>Videon HTTP-vastaus</span><b id="videoHttp">–</b></div>
-          <div><span>Video-JSON löytyi</span><b id="videoJson">–</b></div>
-          <div><span>Postin locationCreated</span><b id="postLocation">–</b></div>
-          <div><span>Videon locationCreated</span><b id="checkedVideos">–</b></div>
-          <div><span>Muut region-kentät</span><b id="regionFields">–</b></div>
         </div>
       </details>
 
-      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">
-        Avaa TikTok-profiili
-      </a>
+      <a id="profileLink" class="profileLink" target="_blank" rel="noopener noreferrer">Avaa TikTok-profiili</a>
     </section>
   </main>
   <script src="/app.js"></script>

@@ -44,3 +44,41 @@ input{min-width:0;border:0;outline:0;background:transparent;font:inherit;padding
   .heroTitle{left:55%;font-size:clamp(1.35rem,7vw,2rem)}
   .introText{font-size:.9rem;margin-bottom:12px}
 }
+
+/* V7 visual polish */
+.pageShell{padding-top:14px}
+.pageTop{height:0;position:relative;z-index:5}
+.languagePicker{position:absolute;right:14px;top:14px}
+.languagePicker select{background-color:rgba(255,255,255,.94);box-shadow:0 4px 14px rgba(0,0,0,.08);border-color:rgba(255,255,255,.72)}
+.heroBanner{height:170px;margin-bottom:20px;box-shadow:0 10px 28px rgba(17,24,39,.08)}
+.heroTitle{left:56%;font-size:clamp(1.8rem,3.15vw,3rem);font-weight:850;text-shadow:0 2px 14px rgba(0,0,0,.58)}
+.introText{font-size:.82rem;margin:0 0 9px;color:#7b8490}
+.contentGrid{grid-template-columns:150px minmax(0,760px) 150px;gap:28px}
+.promoSide{width:150px;height:500px;background:#f1f3f5;border-color:#d8dde3;color:#a5acb5}
+.search{border-radius:15px;box-shadow:0 8px 24px rgba(17,24,39,.045)}
+.card{padding:22px;border-radius:20px;box-shadow:0 12px 34px rgba(17,24,39,.055)}
+.profile{gap:16px}.avatar{width:68px;height:68px}.nickname{font-size:1.24rem}.handle{font-size:.9rem}
+.mainInfo{gap:10px;padding:16px 0;border-bottom:0}
+.mainInfo>div{background:#f5f7f8;border:1px solid #edf0f2;border-radius:12px;padding:12px 14px}
+.mainInfo strong{font-size:1.05rem}
+.bioWrap{padding:15px 0 17px}
+.stats{gap:10px;padding:17px 0 18px}
+.stats div{background:#eef7f3;border:1px solid #dcece5;border-radius:12px;padding:12px 7px 11px}
+.stats strong{font-size:1.04rem;color:#16231d}.stats span{color:#617068}
+details{padding-top:15px}
+.creatorFooter{width:min(1120px,100%)}
+@media(max-width:1120px){.contentGrid{grid-template-columns:minmax(0,760px)}.pageShell{width:min(100% - 30px,960px)}}
+@media(max-width:600px){
+ .pageShell{padding-top:10px}
+ .languagePicker{right:8px;top:8px}
+ .heroBanner{height:122px;margin-bottom:14px}
+ .heroTitle{left:54%;font-size:clamp(1.25rem,6.5vw,1.8rem)}
+ .introText{margin-bottom:8px}
+ .card{padding:16px}
+ .avatar{width:60px;height:60px}
+ .mainInfo{grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;padding:12px 0}
+ .mainInfo>div{padding:10px}
+ .mainInfo strong{font-size:.95rem}
+ .stats{grid-template-columns:repeat(2,1fr);gap:8px;padding:14px 0}
+ .stats div{padding:11px 6px}
+}

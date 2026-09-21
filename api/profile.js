@@ -162,7 +162,67 @@ function deepFindUserInfo(obj, username = "") {
     }
   }
 
-  return null;
+  // TikTok occasionally moves the same public user object to another hydration branch.
+  // Search parsed JSON recursively for an object whose uniqueId is an exact match.
+  // This is intentionally strict so region/language cannot be borrowed from another account.
+  const seen = new WeakSet();
+  let foundUser = null;
+  let foundStats = null;
+
+  const isStatsLike = (value) => value && typeof value === "object" && (
+    Object.prototype.hasOwnProperty.call(value, "followerCount") ||
+    Object.prototype.hasOwnProperty.call(value, "followingCount") ||
+    Object.prototype.hasOwnProperty.call(value, "videoCount") ||
+    Object.prototype.hasOwnProperty.call(value, "heartCount")
+  );
+
+  const normalizeCandidate = (candidate) => {
+    if (!candidate || typeof candidate !== "object") return candidate;
+    const user = { ...candidate };
+    if (!user.region) user.region = user.registerRegion || user.register_region || user.country || null;
+    if (!user.language) user.language = user.languageCode || user.language_code || user.lang || null;
+    return user;
+  };
+
+  const walk = (value, parent = null, depth = 0) => {
+    if (!value || typeof value !== "object" || depth > 14 || foundUser) return;
+    if (seen.has(value)) return;
+    seen.add(value);
+
+    if (!Array.isArray(value)) {
+      const unique = value.uniqueId ?? value.unique_id ?? value.username;
+      if (unique && String(unique).toLowerCase() === wanted) {
+        const looksUserLike = value.nickname || value.secUid || value.sec_uid || value.id || value.avatarThumb || value.avatar_thumb || value.region || value.language;
+        if (looksUserLike) {
+          foundUser = normalizeCandidate({
+            ...value,
+            uniqueId: value.uniqueId ?? value.unique_id ?? value.username,
+            secUid: value.secUid ?? value.sec_uid ?? null,
+            avatarLarger: value.avatarLarger ?? value.avatar_larger ?? null,
+            avatarMedium: value.avatarMedium ?? value.avatar_medium ?? null,
+            avatarThumb: value.avatarThumb ?? value.avatar_thumb ?? value.avatar ?? null,
+            createTime: value.createTime ?? value.create_time ?? null,
+            privateAccount: value.privateAccount ?? value.private_account ?? null,
+          });
+
+          if (parent && typeof parent === "object") {
+            for (const sibling of Object.values(parent)) {
+              if (isStatsLike(sibling)) { foundStats = sibling; break; }
+            }
+          }
+          return;
+        }
+      }
+    }
+
+    for (const child of Object.values(value)) {
+      if (child && typeof child === "object") walk(child, value, depth + 1);
+      if (foundUser) break;
+    }
+  };
+
+  walk(obj);
+  return foundUser ? { user: foundUser, stats: foundStats } : null;
 }
 
 function regexProfileFallback(html, username = "") {
@@ -219,10 +279,21 @@ function regexProfileFallback(html, username = "") {
   };
 }
 
+function enrichUserAliases(user) {
+  if (!user || typeof user !== "object") return user;
+  return {
+    ...user,
+    region: user.region || user.registerRegion || user.register_region || user.country || null,
+    language: user.language || user.languageCode || user.language_code || user.lang || null,
+  };
+}
+
 function extractProfileFromHtml(html, username = "") {
   const universal = findScriptJson(html, "__UNIVERSAL_DATA_FOR_REHYDRATION__");
   const sigi = findScriptJson(html, "SIGI_STATE") || findScriptJson(html, "sigi-persisted-data");
-  return deepFindUserInfo(universal, username) || deepFindUserInfo(sigi, username) || regexProfileFallback(html, username);
+  const found = deepFindUserInfo(universal, username) || deepFindUserInfo(sigi, username) || regexProfileFallback(html, username);
+  if (found?.user) found.user = enrichUserAliases(found.user);
+  return found;
 }
 
 async function fetchProfileOEmbed(username) {
@@ -375,6 +446,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "TikTok ei palauttanut julkista profiilidataa tästä sivusta." });
     }
 
+    parsed.user = enrichUserAliases(parsed.user);
     const u = parsed.user;
     const s = parsed.stats || {};
     const profileHasNoVideos = Number(s.videoCount) === 0;
@@ -628,6 +700,7 @@ export default async function handler(req, res) {
       regionSource,
       diagnostics: {
         httpStatus: response?.status?.() ?? null,
+        parserVersion: "v12-recursive-user-match",
         regionKeyPresent: parsed.regionKeyPresent,
         rawRegion: parsed.rawRegion,
         postApiAttempted: postApi.attempted,

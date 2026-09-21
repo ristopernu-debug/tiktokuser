@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f7f8">
   <title data-i18n="title">TikTok Checker</title>
-  <link rel="stylesheet" href="/styles.css?v=9">
+  <link rel="stylesheet" href="/styles.css?v=12">
 </head>
 <body>
   <div class="pageShell">
@@ -56,17 +56,17 @@
           <div class="mainInfo">
             <div>
               <span data-i18n="region">Country / region</span>
-              <strong id="region">N/A</strong>
+              <strong id="region">Not available</strong>
             </div>
             <div>
               <span data-i18n="language">Language</span>
-              <strong id="language">N/A</strong>
+              <strong id="language">Not available</strong>
             </div>
           </div>
 
           <div id="videoFallback" class="videoFallback hidden">
             <form id="videoForm" class="videoSearch">
-              <label for="videoUrl" class="srOnly" data-i18n="videoPlaceholder">TikTok-videon linkki</label>
+              <label for="videoUrl" class="srOnly" data-i18n="videoPlaceholder">TikTok video URL</label>
               <input id="videoUrl" type="url" data-i18n-placeholder="videoPlaceholder" placeholder="TikTok video URL" autocomplete="off" spellcheck="false" required>
               <button id="videoBtn" type="submit" data-i18n="checkVideo">Check video</button>
             </form>
@@ -111,6 +111,6 @@
     <div id="checkCounter" class="checkCounter" aria-live="polite">0 checks</div>
   </div>
 
-  <script src="/app.js?v=11"></script>
+  <script src="/app.js?v=12"></script>
 </body>
 </html>

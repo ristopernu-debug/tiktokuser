@@ -24,3 +24,9 @@ of this package and deploy normally. No new environment variables are required.
 TikTok can change its public page structure or block automated requests. The added
 fallbacks reduce false "not found" results, but cannot guarantee that every public
 account will always be retrievable.
+
+
+## V12
+- English is the default UI language even for browsers that used an older saved language preference.
+- Profile parsing also searches alternate TikTok hydration branches for the exact username before falling back to limited oEmbed data.
+- Missing country/language is shown as “Not available”; the app does not guess these values.

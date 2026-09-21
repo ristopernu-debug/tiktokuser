@@ -10,12 +10,12 @@ const translations = {
 };
 
 const localeMap={fi:"fi-FI",en:"en-US",sv:"sv-SE",de:"de-DE",fr:"fr-FR",es:"es-ES"};
-let uiLang="fi";
+let uiLang="en";
 let currentUsername="";
 let currentData=null;
 
 function t(key){return translations[uiLang]?.[key]||translations.en[key]||key}
-function chooseInitialLanguage(){const saved=localStorage.getItem("tiktokCheckerLanguage");if(translations[saved])return saved;const browser=(navigator.language||"en").slice(0,2).toLowerCase();return translations[browser]?browser:"en"}
+function chooseInitialLanguage(){const saved=localStorage.getItem("tiktokCheckerLanguage");if(translations[saved])return saved;return "en"}
 function applyLanguage(lang){uiLang=translations[lang]?lang:"en";localStorage.setItem("tiktokCheckerLanguage",uiLang);document.documentElement.lang=uiLang;$("uiLanguage").value=uiLang;document.querySelectorAll("[data-i18n]").forEach(el=>{el.textContent=t(el.dataset.i18n)});document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{el.placeholder=t(el.dataset.i18nPlaceholder)});if(currentData)render(currentData,currentUsername);updateCheckCounter()}
 
 function normalizeQuery(value=""){return value.trim().replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i,"").split(/[?#]/)[0].replace(/\/$/,"")}
@@ -31,7 +31,7 @@ function getCheckCount(){const n=Number(localStorage.getItem(CHECK_COUNT_KEY)||0
 function updateCheckCounter(){const el=$("checkCounter");if(!el)return;const count=getCheckCount();el.textContent=`${new Intl.NumberFormat(localeMap[uiLang]).format(count)} ${t("checkCount")}`}
 function incrementCheckCounter(){localStorage.setItem(CHECK_COUNT_KEY,String(getCheckCount()+1));updateCheckCounter()}
 
-function render(data,username){currentData=data;currentUsername=username;const u=data.user||{},s=data.stats||{};$("nickname").textContent=u.nickname||username;$("handle").textContent=`@${u.uniqueId||username}`;$("region").textContent=regionName(u.region);$("language").textContent=languageName(u.language);$("videoFallback").classList.toggle("hidden",!!u.region);$("regionSourceRow").classList.toggle("hidden",!u.region);$("regionSource").textContent=data.regionSource||"TikTok";
+function render(data,username){currentData=data;currentUsername=username;const u=data.user||{},s=data.stats||{};$("nickname").textContent=u.nickname||username;$("handle").textContent=`@${u.uniqueId||username}`;$("region").textContent=regionName(u.region);$("language").textContent=languageName(u.language);$("videoFallback").classList.toggle("hidden",!!u.region||Number(s.videoCount)===0||!!data?.diagnostics?.limitedProfileData);$("regionSourceRow").classList.toggle("hidden",!u.region);$("regionSource").textContent=data.regionSource||"TikTok";
  const avatar=$("avatar"),fallback=$("avatarFallback");fallback.textContent=(u.nickname||username).charAt(0).toUpperCase();if(u.avatar){avatar.src=u.avatar;avatar.alt=u.nickname||username;avatar.classList.remove("hidden");fallback.classList.add("hidden")}else{avatar.classList.add("hidden");fallback.classList.remove("hidden")}
  if(u.signature){$("bio").textContent=u.signature;$("bioWrap").classList.remove("hidden")}else $("bioWrap").classList.add("hidden");
  $("followers").textContent=compact(s.followerCount);$("following").textContent=compact(s.followingCount);$("likes").textContent=compact(s.heartCount);$("videos").textContent=compact(s.videoCount);$("userId").textContent=u.id||"–";$("created").textContent=u.createTime?new Date(Number(u.createTime)*1000).toLocaleString(localeMap[uiLang]):"–";$("privateAccount").textContent=yesNo(u.privateAccount);$("verified").textContent=yesNo(u.verified);$("profileLink").href=`https://www.tiktok.com/@${encodeURIComponent(u.uniqueId||username)}`;$("result").classList.remove("hidden")}

@@ -120,6 +120,124 @@ function scanRegionFields(obj, maxHits = 30) {
   return hits;
 }
 
+
+
+function decodeHtmlEntities(text = "") {
+  return String(text)
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function findScriptJson(html, id) {
+  const escaped = String(id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`<script[^>]+id=["']${escaped}["'][^>]*>([\\s\\S]*?)<\\/script>`, "i");
+  const match = String(html || "").match(re);
+  if (!match) return null;
+  try { return JSON.parse(decodeHtmlEntities(match[1].trim())); } catch { return null; }
+}
+
+function deepFindUserInfo(obj, username = "") {
+  if (!obj || typeof obj !== "object") return null;
+  const wanted = String(username || "").toLowerCase();
+
+  const direct = obj?.__DEFAULT_SCOPE__?.["webapp.user-detail"]?.userInfo;
+  if (direct?.user && (!wanted || String(direct.user.uniqueId || "").toLowerCase() === wanted)) return direct;
+
+  const module = obj?.UserModule;
+  if (module?.users && typeof module.users === "object") {
+    const users = Object.values(module.users);
+    const user = users.find((candidate) => String(candidate?.uniqueId || "").toLowerCase() === wanted) || null;
+    if (user) {
+      let stats = null;
+      if (module.stats && typeof module.stats === "object") {
+        stats = module.stats[user.id] || Object.values(module.stats).find((candidate) => {
+          const unique = candidate?.uniqueId || candidate?.unique_id;
+          return unique && String(unique).toLowerCase() === wanted;
+        }) || null;
+      }
+      return { user, stats };
+    }
+  }
+
+  return null;
+}
+
+function regexProfileFallback(html, username = "") {
+  const wanted = String(username || "").toLowerCase();
+  const source = String(html || "");
+  const marker = source.toLowerCase().indexOf('"uniqueid":"' + wanted.replace(/"/g, ""));
+  const markerAlt = source.toLowerCase().indexOf('"uniqueid" : "' + wanted.replace(/"/g, ""));
+  const index = marker >= 0 ? marker : markerAlt;
+  if (index < 0) return null;
+
+  const start = Math.max(0, index - 12000);
+  const end = Math.min(source.length, index + 90000);
+  const block = source.slice(start, end);
+
+  const str = (name) => {
+    const m = block.match(new RegExp(`"${name}"\\s*:\\s*"([^"\\]*(?:\\.[^"\\]*)*)"`, "i"));
+    if (!m) return null;
+    try { return JSON.parse(`"${m[1]}"`); } catch { return m[1]; }
+  };
+  const num = (name) => {
+    const m = block.match(new RegExp(`"${name}"\\s*:\\s*(\\d+)`, "i"));
+    return m ? Number(m[1]) : null;
+  };
+  const bool = (name) => {
+    const m = block.match(new RegExp(`"${name}"\\s*:\\s*(true|false)`, "i"));
+    return m ? m[1].toLowerCase() === "true" : null;
+  };
+
+  const uniqueId = str("uniqueId");
+  if (!uniqueId || uniqueId.toLowerCase() !== wanted) return null;
+
+  return {
+    user: {
+      id: str("id"),
+      uniqueId,
+      nickname: str("nickname"),
+      signature: str("signature"),
+      avatarLarger: str("avatarLarger"),
+      avatarMedium: str("avatarMedium"),
+      avatarThumb: str("avatarThumb"),
+      secUid: str("secUid"),
+      region: str("region"),
+      language: str("language"),
+      createTime: num("createTime"),
+      privateAccount: bool("privateAccount"),
+      verified: bool("verified"),
+    },
+    stats: {
+      followerCount: num("followerCount"),
+      followingCount: num("followingCount"),
+      heartCount: num("heartCount") ?? num("heart"),
+      videoCount: num("videoCount"),
+    },
+  };
+}
+
+function extractProfileFromHtml(html, username = "") {
+  const universal = findScriptJson(html, "__UNIVERSAL_DATA_FOR_REHYDRATION__");
+  const sigi = findScriptJson(html, "SIGI_STATE") || findScriptJson(html, "sigi-persisted-data");
+  return deepFindUserInfo(universal, username) || deepFindUserInfo(sigi, username) || regexProfileFallback(html, username);
+}
+
+async function fetchProfileOEmbed(username) {
+  const profileUrl = `https://www.tiktok.com/@${encodeURIComponent(username)}`;
+  const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
+  const response = await fetch(oembedUrl, {
+    headers: {
+      accept: "application/json",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    },
+  });
+  if (!response.ok) return null;
+  try { return await response.json(); } catch { return null; }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -180,7 +298,7 @@ export default async function handler(req, res) {
 
     const response = await page.goto(profileUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
 
-    const parsed = await page.evaluate(() => {
+    let parsed = await page.evaluate(() => {
       const el = document.querySelector("#__UNIVERSAL_DATA_FOR_REHYDRATION__");
       if (!el?.textContent) {
         return { user: null, stats: null, rawRegion: null, regionKeyPresent: false };
@@ -201,25 +319,80 @@ export default async function handler(req, res) {
       }
     });
 
+    // Some valid public accounts (especially accounts with no public posts) do not expose
+    // webapp.user-detail through the same hydration node on every request. Inspect the full
+    // rendered HTML and older TikTok state containers before treating the account as missing.
     if (!parsed.user) {
+      try {
+        const html = await page.content();
+        const fallbackInfo = extractProfileFromHtml(html, username);
+        if (fallbackInfo?.user) {
+          const fallbackUser = fallbackInfo.user;
+          parsed = {
+            user: fallbackUser,
+            stats: fallbackInfo.stats || fallbackInfo.statsV2 || null,
+            regionKeyPresent: Object.prototype.hasOwnProperty.call(fallbackUser, "region"),
+            rawRegion: Object.prototype.hasOwnProperty.call(fallbackUser, "region") ? fallbackUser.region : null,
+          };
+        }
+      } catch {}
+    }
+
+    // Last-resort existence check: TikTok's public oEmbed endpoint can still identify a creator
+    // even when the profile page omits hydration data. In that case return the profile with the
+    // fields TikTok actually exposed instead of incorrectly reporting "user not found".
+    if (!parsed.user) {
+      const oembed = await fetchProfileOEmbed(username).catch(() => null);
+      if (oembed) {
+        return res.status(200).json({
+          regionSource: null,
+          diagnostics: {
+            httpStatus: response?.status?.() ?? null,
+            profileFallback: "TikTok oEmbed",
+            limitedProfileData: true,
+          },
+          user: {
+            id: null,
+            secUid: null,
+            uniqueId: username,
+            nickname: oembed.author_name || username,
+            signature: null,
+            avatar: oembed.thumbnail_url || null,
+            region: null,
+            language: null,
+            createTime: null,
+            privateAccount: null,
+            verified: null,
+          },
+          stats: {
+            followerCount: null,
+            followingCount: null,
+            heartCount: null,
+            videoCount: null,
+          },
+        });
+      }
       return res.status(404).json({ error: "TikTok ei palauttanut julkista profiilidataa tästä sivusta." });
     }
 
     const u = parsed.user;
     const s = parsed.stats || {};
+    const profileHasNoVideos = Number(s.videoCount) === 0;
 
     // Give TikTok's own frontend a chance to request the user's post list. A small scroll
     // helps lazy-loaded profile grids start their normal browser request when available.
-    try {
-      await page.evaluate(() => window.scrollTo(0, Math.max(document.body.scrollHeight * 0.45, 700)));
-    } catch {}
+    if (!profileHasNoVideos) {
+      try {
+        await page.evaluate(() => window.scrollTo(0, Math.max(document.body.scrollHeight * 0.45, 700)));
+      } catch {}
 
-    try {
-      await Promise.race([
-        postCapturePromise,
-        new Promise((resolve) => setTimeout(resolve, 9000)),
-      ]);
-    } catch {}
+      try {
+        await Promise.race([
+          postCapturePromise,
+          new Promise((resolve) => setTimeout(resolve, 9000)),
+        ]);
+      } catch {}
+    }
 
     page.off("response", onResponse);
 
@@ -277,7 +450,7 @@ export default async function handler(req, res) {
 
     // Optional fallback: if TikTok did not emit the request at all, try the same endpoint from
     // inside the live page context. This is diagnostic only; it does not replace the primary path.
-    if (!postApi.ok && !capturedPostResponse && u.secUid) {
+    if (!profileHasNoVideos && !postApi.ok && !capturedPostResponse && u.secUid) {
       const fallback = await page.evaluate(async ({ secUid, uniqueId }) => {
         const result = { status: null, text: "", data: null, error: null };
         try {
@@ -313,7 +486,7 @@ export default async function handler(req, res) {
     let domVideoUrl = null;
     let htmlVideoUrl = null;
 
-    if (!postApi.firstVideoUrl) {
+    if (!profileHasNoVideos && !postApi.firstVideoUrl) {
       try { await page.waitForSelector('a[href*="/video/"]', { timeout: 5000 }); } catch {}
 
       domVideoUrl = await page.evaluate((expectedUsername) => {
@@ -336,7 +509,7 @@ export default async function handler(req, res) {
       domVideoUrl = cleanVideoUrl(domVideoUrl || "", u.uniqueId || username);
     }
 
-    if (!postApi.firstVideoUrl && !domVideoUrl) {
+    if (!profileHasNoVideos && !postApi.firstVideoUrl && !domVideoUrl) {
       try {
         const html = await page.content();
         const escaped = String(u.uniqueId || username).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -360,7 +533,7 @@ export default async function handler(req, res) {
     // can contain up to ten recent public videos. This route needs no API key.
     let embedVideoUrl = null;
     let embedVideoError = null;
-    if (!postApi.firstVideoUrl && !domVideoUrl && !htmlVideoUrl) {
+    if (!profileHasNoVideos && !postApi.firstVideoUrl && !domVideoUrl && !htmlVideoUrl) {
       const embedDiscovery = await discoverVideoFromCreatorEmbed(browser, u.uniqueId || username);
       embedVideoUrl = embedDiscovery.url;
       embedVideoError = embedDiscovery.error;

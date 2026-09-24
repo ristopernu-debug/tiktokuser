@@ -30,3 +30,14 @@ account will always be retrievable.
 - English is the default UI language even for browsers that used an older saved language preference.
 - Profile parsing also searches alternate TikTok hydration branches for the exact username before falling back to limited oEmbed data.
 - Missing country/language is shown as “Not available”; the app does not guess these values.
+
+
+## V13 - strict region source test
+- Region/language from `webapp.app-context`, session user, storeRegion, ageGateRegion, clusterRegion and TikTok environment configuration are never used as the searched profile's country.
+- The primary `webapp.user-detail` object is accepted only when its `uniqueId` exactly matches the searched username.
+- Post-list region is accepted only from posts tied to the searched account (matching author or matching `secUid` request).
+- Video `locationCreated` is accepted only when the video metadata author exactly matches the searched username.
+- Wide HTML regex fallback no longer supplies region/language values.
+- Exact JSON-LD `knowsLanguage` can be used as a language fallback when its identifier/alternateName matches the searched username.
+- UI label changed from Country / region to TikTok region.
+- English remains the default UI language.

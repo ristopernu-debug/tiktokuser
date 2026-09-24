@@ -326,9 +326,18 @@ function extractProfileFromHtml(html, username = "") {
   const jsonLd = extractJsonLdProfile(html, username);
   const found = deepFindUserInfo(universal, username) || deepFindUserInfo(sigi, username) || regexProfileFallback(html, username);
   if (found?.user) {
+    const original = found.user;
+    const regionField = ["region", "registerRegion", "register_region", "country"].find((key) => original?.[key]);
+    const languageField = ["language", "languageCode", "language_code", "lang"].find((key) => original?.[key]);
+    found.regionField = regionField || null;
+    found.languageSource = languageField ? `Profile metadata (user.${languageField})` : null;
+
     found.user = enrichUserAliases(found.user);
     if (jsonLd) {
-      if (!found.user.language && jsonLd.language) found.user.language = jsonLd.language;
+      if (!found.user.language && jsonLd.language) {
+        found.user.language = jsonLd.language;
+        found.languageSource = "JSON-LD (mainEntity.knowsLanguage)";
+      }
       if (!found.user.nickname && jsonLd.nickname) found.user.nickname = jsonLd.nickname;
       if (!found.user.signature && jsonLd.signature) found.user.signature = jsonLd.signature;
     }
@@ -411,7 +420,7 @@ export default async function handler(req, res) {
     const response = await page.goto(profileUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
 
     let parsed = await page.evaluate((expectedUsername) => {
-      const empty = { user: null, stats: null, rawRegion: null, regionKeyPresent: false, profileUsernameMatched: false };
+      const empty = { user: null, stats: null, rawRegion: null, regionKeyPresent: false, profileUsernameMatched: false, regionField: null, languageSource: null };
       const el = document.querySelector("#__UNIVERSAL_DATA_FOR_REHYDRATION__");
       if (!el?.textContent) return empty;
 
@@ -423,12 +432,15 @@ export default async function handler(req, res) {
         const expected = String(expectedUsername || "").toLowerCase();
         if (!user || !actual || actual !== expected) return empty;
 
+        const languageField = ["language", "languageCode", "language_code", "lang"].find((key) => user?.[key]);
         return {
           user,
           stats: info?.stats || info?.statsV2 || null,
           profileUsernameMatched: true,
           regionKeyPresent: Object.prototype.hasOwnProperty.call(user, "region"),
           rawRegion: Object.prototype.hasOwnProperty.call(user, "region") ? user.region : null,
+          regionField: Object.prototype.hasOwnProperty.call(user, "region") && user.region ? "region" : null,
+          languageSource: languageField ? `Profile metadata (user.${languageField})` : null,
         };
       } catch {
         return empty;
@@ -447,8 +459,10 @@ export default async function handler(req, res) {
           parsed = {
             user: fallbackUser,
             stats: fallbackInfo.stats || fallbackInfo.statsV2 || null,
-            regionKeyPresent: Object.prototype.hasOwnProperty.call(fallbackUser, "region"),
-            rawRegion: Object.prototype.hasOwnProperty.call(fallbackUser, "region") ? fallbackUser.region : null,
+            regionKeyPresent: !!fallbackInfo.regionField,
+            rawRegion: fallbackInfo.regionField ? fallbackUser.region : null,
+            regionField: fallbackInfo.regionField || null,
+            languageSource: fallbackInfo.languageSource || null,
             profileUsernameMatched: String(fallbackUser.uniqueId || "").toLowerCase() === username.toLowerCase(),
           };
         }
@@ -463,6 +477,7 @@ export default async function handler(req, res) {
       if (oembed) {
         return res.status(200).json({
           regionSource: null,
+          languageSource: null,
           diagnostics: {
             httpStatus: response?.status?.() ?? null,
             profileFallback: "TikTok oEmbed",
@@ -765,12 +780,13 @@ export default async function handler(req, res) {
     const videoRegion = twoLetter(video.locationCreated);
     const region = profileRegion || postRegion || videoRegion;
     const regionSource = profileRegion
-      ? "TikTok-profiilidata"
+      ? `Profile metadata (user.${parsed.regionField || "region"})`
       : postRegion
-        ? "TikTok-postilista (locationCreated)"
+        ? "Post list metadata (locationCreated)"
         : videoRegion
-          ? "TikTok-videometadata (locationCreated)"
+          ? "Video metadata (locationCreated)"
           : null;
+    const languageSource = u.language ? (parsed.languageSource || "Profile metadata (language)") : null;
 
     const allRegionFields = [
       ...(Array.isArray(postApi.regionLikeFields) ? postApi.regionLikeFields.map((x) => ({ ...x, path: `postApi.${x.path}` })) : []),
@@ -779,9 +795,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       regionSource,
+      languageSource,
       diagnostics: {
         httpStatus: response?.status?.() ?? null,
-        parserVersion: "v13-strict-region-source",
+        parserVersion: "v14-source-trace",
         profileUsernameMatched: !!parsed.profileUsernameMatched,
         regionKeyPresent: parsed.regionKeyPresent,
         rawRegion: parsed.rawRegion,

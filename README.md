@@ -41,3 +41,11 @@ account will always be retrievable.
 - Exact JSON-LD `knowsLanguage` can be used as a language fallback when its identifier/alternateName matches the searched username.
 - UI label changed from Country / region to TikTok region.
 - English remains the default UI language.
+
+
+## V14 source trace
+
+- More details shows the exact region source, for example `Profile metadata (user.region)` or `Video metadata (locationCreated)`.
+- More details also shows the language source when available, for example `Profile metadata (user.language)` or `JSON-LD (mainEntity.knowsLanguage)`.
+- Session/app-context region fields are not accepted as the searched profile region.
+- The interface defaults to English on first load.

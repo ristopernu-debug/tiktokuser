@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6f7f8">
   <title data-i18n="title">TikTok Checker</title>
-  <link rel="stylesheet" href="/styles.css?v=16">
+  <link rel="stylesheet" href="/styles.css?v=17">
 </head>
 <body>
   <div class="pageShell">
@@ -98,21 +98,18 @@
           </details>
 
           <details id="manualReview" class="reviewDetails">
-            <summary>
-              <span data-i18n="manualReview">Manual review</span>
-              <span id="reviewProgress" class="reviewProgress">0 selected</span>
-            </summary>
+            <summary data-i18n="manualReview">Manual review</summary>
             <div class="reviewBody">
-              <p class="reviewNote" data-i18n="reviewNote">Select only the indicators you can observe in the profile posts. Selections are not proof that an image is AI-generated or that a user is in a particular physical location.</p>
+              <p class="reviewNote" data-i18n="reviewNote">Things to look for in profile posts. These indicators are not proof that an image is AI-generated or that a user is in a particular physical location.</p>
               <div class="reviewList">
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review1">Signs or image text are distorted, nonsensical, or only almost correct</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review2">Local street signs, traffic signs, or wayfinding do not match the claimed place</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review3">Buildings, streets, or other surroundings do not fit the claimed location</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review4">Background objects merge, repeat, or contain geometrically inconsistent details</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review5">Face, hands, clothing, or other details change inconsistently across posts</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review6">Lighting, shadows, reflections, or perspective are internally inconsistent</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review7">The image contains unusually smooth or otherwise synthetic-looking details</span></label>
-                <label><input class="reviewCheck" type="checkbox"><span data-i18n="review8">TikTok metadata conflicts with the visible context in the posts</span></label>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review1">Signs or image text are distorted, nonsensical, or only almost correct</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review2">Local street signs, traffic signs, or wayfinding do not match the claimed place</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review3">Buildings, streets, or other surroundings do not fit the claimed location</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review4">Background objects merge, repeat, or contain geometrically inconsistent details</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review5">Face, hands, clothing, or other details change inconsistently across posts</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review6">Lighting, shadows, reflections, or perspective are internally inconsistent</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review7">The image contains unusually smooth or otherwise synthetic-looking details</span></div>
+                <div class="reviewItem"><span class="reviewMark" aria-hidden="true">✓</span><span data-i18n="review8">TikTok metadata conflicts with the visible context in the posts</span></div>
               </div>
             </div>
           </details>
@@ -132,6 +129,6 @@
     <div id="checkCounter" class="checkCounter" aria-live="polite">0 checks</div>
   </div>
 
-  <script src="/app.js?v=16"></script>
+  <script src="/app.js?v=17"></script>
 </body>
 </html>

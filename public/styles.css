@@ -140,28 +140,20 @@ summary::marker { color: #657c6e; }
 .details > div { display: grid; gap: 4px; }
 .details span { color: var(--muted); font-size: .6875rem; text-transform: uppercase; letter-spacing: .06em; }
 .details code, .details b { color: #334d3f; font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
-/* Manual review is intentionally separate from TikTok metadata.
-   Items are plain check marks, not card-like controls. */
+/* Manual review is informational only: static check marks, no clickable controls. */
 .reviewDetails { margin-top: 12px; }
 .reviewDetails summary { min-width: 0; }
-.reviewProgress {
-  float: right; margin: 3px 0 0 12px; color: var(--muted); font-size: .6875rem; font-weight: 600;
-  white-space: nowrap; font-variant-numeric: tabular-nums;
-}
 .reviewBody { margin: 10px 0 2px; padding: 2px 0 0; }
 .reviewNote { max-width: 720px; margin: 0 0 14px; color: var(--muted); font-size: .75rem; line-height: 1.55; }
-.reviewList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; row-gap: 12px; }
-.reviewList label {
-  display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 9px;
-  padding: 0; border: 0; border-radius: 0; background: transparent;
-  color: #405148; font-size: .75rem; line-height: 1.45; cursor: default;
+.reviewList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 12px; }
+.reviewItem {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: start; gap: 10px;
+  color: #405148; font-size: .75rem; line-height: 1.45;
 }
-.reviewList label span { cursor: default; }
-.reviewCheck {
-  width: 16px; height: 16px; min-height: 0; margin: 1px 0 0; padding: 0;
-  appearance: auto; accent-color: var(--forest); cursor: pointer;
+.reviewMark {
+  display: inline-block; margin-top: -1px; color: var(--forest);
+  font-size: 1rem; line-height: 1.1; font-weight: 800;
 }
-.reviewCheck:focus-visible { outline: 2px solid #82a997; outline-offset: 2px; }
 
 .profileLink {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;

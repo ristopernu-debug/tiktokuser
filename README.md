@@ -43,9 +43,17 @@ account will always be retrievable.
 - English remains the default UI language.
 
 
-## V14 source trace
+## V15 source trace
 
 - More details shows the exact region source, for example `Profile metadata (user.region)` or `Video metadata (locationCreated)`.
 - More details also shows the language source when available, for example `Profile metadata (user.language)` or `JSON-LD (mainEntity.knowsLanguage)`.
 - Session/app-context region fields are not accepted as the searched profile region.
 - The interface defaults to English on first load.
+
+
+## V15 – Manual review
+
+- Profiilikortissa on erillinen, oletuksena suljettu Manual review -tarkistuslista.
+- Lista auttaa vertaamaan kuvien tekstejä, paikallisia opasteita, ympäristöä, perspektiiviä ja muuta visuaalista johdonmukaisuutta.
+- Valinnat tallennetaan selaimen localStorageen käyttäjätunnuskohtaisesti.
+- Lista ei tee automaattista AI- tai sijaintipäätelmää.

@@ -140,6 +140,28 @@ summary::marker { color: #657c6e; }
 .details > div { display: grid; gap: 4px; }
 .details span { color: var(--muted); font-size: .6875rem; text-transform: uppercase; letter-spacing: .06em; }
 .details code, .details b { color: #334d3f; font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+/* Manual review is intentionally separate from TikTok metadata. */
+.reviewDetails { margin-top: 12px; }
+.reviewDetails summary { min-width: 0; }
+.reviewProgress {
+  float: right; margin: 3px 0 0 12px; color: var(--muted); font-size: .6875rem; font-weight: 600;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.reviewBody { margin: 10px 0 2px; padding: 14px; border: 1px solid #e5ece7; border-radius: 12px; background: #fafcfb; }
+.reviewNote { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.55; }
+.reviewList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+.reviewList label {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px;
+  padding: 9px 10px; border: 1px solid #edf1ee; border-radius: 9px; background: #fff;
+  color: #405148; font-size: .75rem; line-height: 1.45; cursor: pointer;
+}
+.reviewList label:hover { background: var(--mint); border-color: #dce9e1; }
+.reviewCheck {
+  width: 16px; height: 16px; min-height: 0; margin: 1px 0 0; padding: 0;
+  appearance: auto; accent-color: var(--forest); cursor: pointer;
+}
+.reviewCheck:focus-visible { outline: 2px solid #82a997; outline-offset: 2px; }
+
 .profileLink {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   max-width: 100%; min-height: 44px; margin-top: 14px; padding: 10px 15px;
@@ -228,6 +250,8 @@ summary::marker { color: #657c6e; }
   .matchFollowers { display: none; }
   .videoSearch { grid-template-columns: minmax(0, 1fr); }
   .videoSearch button { justify-self: start; }
+  .reviewList { grid-template-columns: minmax(0, 1fr); }
+  .reviewBody { padding: 11px; }
 }
 @media (max-width: 359px) {
   .pageShell { width: calc(100% - 24px); }

@@ -57,3 +57,10 @@ account will always be retrievable.
 - Lista auttaa vertaamaan kuvien tekstejä, paikallisia opasteita, ympäristöä, perspektiiviä ja muuta visuaalista johdonmukaisuutta.
 - Valinnat tallennetaan selaimen localStorageen käyttäjätunnuskohtaisesti.
 - Lista ei tee automaattista AI- tai sijaintipäätelmää.
+
+
+## V16 UI change
+
+- Manual review items are now plain checkboxes with text, without card-like boxes or hover states.
+- The progress text now reports selected indicators instead of reviewed items.
+- Manual-review selections use a new V16 local-storage key, so accidental V15 selections are reset.
